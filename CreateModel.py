@@ -44,5 +44,9 @@ def interface(input_str):
         )
         conv = tf.nn.conv2d(input_str, kernel, [1, 1, 1, 1], padding="SAME")
         biases = _veriable_on_cpu('biases', [64], tf.constant_initializer(0.0))
-        #pooling layer 1
-    pool1 = tf.nn.max_pool()
+        pre_activation = tf.nn.bias_add(conv, biases)
+        conv1 = tf.nn.relu(pre_activation, 'conv1')
+    # pooling layer 1
+
+    pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], name='pooling1')
+
