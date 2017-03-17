@@ -3,7 +3,15 @@ import numpy
 
 VEC_SIZE = 60
 KERNEL_WIDTH = 3
-
+def _activation_summary(x):
+    """
+    为定义的操作添加总结，加入方便生成模型和流程图
+    :param x:
+    :return:
+    """
+    tensorname = x.op.name
+    tf.summary.histogram(tensorname+"/activation",x)
+    tf.summary.scalar(tensorname+'/sparsity',tf.nn.zero_fraction(x))
 def _veriable_on_cpu(name,shape,initializer):
     """
     从示例代码里看到的函数方法，目的大概是创建缓存在cpu中的变量
@@ -34,7 +42,7 @@ def _veriable_with_wight_decay(name,shape,stddev,wd):
 def interface(input_str):
     batch_size = 100
     word_vec_size = 60
-    with tf.name_scope("cov1") as scope:
+    with tf.name_scope("conv1") as scope:
 
         kernel = _veriable_with_wight_decay(
             name='weight',
@@ -45,8 +53,11 @@ def interface(input_str):
         conv = tf.nn.conv2d(input_str, kernel, [1, 1, 1, 1], padding="SAME")
         biases = _veriable_on_cpu('biases', [64], tf.constant_initializer(0.0))
         pre_activation = tf.nn.bias_add(conv, biases)
-        conv1 = tf.nn.relu(pre_activation, 'conv1')
+        conv1 = tf.nn.relu(pre_activation, name = scope.name)
+        _activation_summary(conv1)
     # pooling layer 1
 
-    pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], name='pooling1')
-
+    pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pooling1')
+    # norm1
+    norm1 = tf.nn.l2_normalize(pool1,2)
+    #
