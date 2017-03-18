@@ -3,6 +3,7 @@ import numpy
 from gensim.models import Word2Vec
 VEC_SIZE = 60
 KERNEL_WIDTH = 3
+PROPORTION = 0.5
 LOCAL_3 = 400
 LOCAL_4 = 200
 BASE_DATA_PATH = 'd:/python/op/data'
@@ -77,9 +78,17 @@ def interface(input_str):
     pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pooling1')
     # norm1
     norm1 = tf.nn.l2_normalize(pool1, 2)
+
+    #drop out layer
+    with tf.name_scope("dropout") as scope:
+        dim = norm1.get_shape()
+        rv = tf.random_uniform(dim,minval=PROPORTION,maxval=1+PROPORTION)
+
+        mask = tf.floor(rv)
+        dropout = norm1*mask
     # hidden layer 1
     with tf.name_scope("local3") as scope:
-        reshape = tf.reshape(norm1,[batch_size,-1])
+        reshape = tf.reshape(dropout,[batch_size,-1])
         dim = reshape.get_shape()[1].value
         weights = _variable_with_wight_decay('weights',shape=[dim,LOCAL_3],stddev=0.04,wd = 0.004)
         biases = _variable_on_cpu('biases',[LOCAL_3],tf.constant_initializer(0.1))
@@ -91,4 +100,5 @@ def interface(input_str):
         biases = _variable_on_cpu('biases',shape=[LOCAL_4],initializer=tf.constant_initializer(0.1))
         local4 = tf.nn.relu(tf.matmul(local3,weights)+biases,name = scope.name)
         _activation_summary(local4)
+    with tf.name_scope('softmax_linear') as scope:
 
