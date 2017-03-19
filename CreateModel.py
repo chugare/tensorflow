@@ -6,6 +6,7 @@ KERNEL_WIDTH = 3
 PROPORTION = 0.5
 LOCAL_3 = 400
 LOCAL_4 = 200
+CLASS_NUM = 5
 BASE_DATA_PATH = 'd:/python/op/data'
 def generate_static_vector():
     """
@@ -100,5 +101,33 @@ def interface(input_str):
         biases = _variable_on_cpu('biases',shape=[LOCAL_4],initializer=tf.constant_initializer(0.1))
         local4 = tf.nn.relu(tf.matmul(local3,weights)+biases,name = scope.name)
         _activation_summary(local4)
-    with tf.name_scope('softmax_linear') as scope:
+    #softmax生成层，按照参考的说法，tensorflow本身的交叉熵函数可以接受"not scaled"的数据，为了提高效率
+    #softmax 对于原数据进行了线性变化
 
+    with tf.name_scope('softmax_linear') as scope:
+        weights = _variable_with_wight_decay('weights',shape=[LOCAL_4,CLASS_NUM],stddev= 1/192.0,wd=0.004)
+        biases = _variable_on_cpu('biases',shape=[CLASS_NUM],initializer=tf.constant_initializer(0.0))
+        softmax_linear = tf.add(tf.matmul(local4,weights),biases,name='softmax')
+
+    return  softmax_linear
+def loss(logits,label):
+    """
+
+    :param logits: 模型预测产生的结果
+    :param label: 数据实际的值
+    :return:
+
+    """
+    labels = tf.cast(label,tf.int64)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=labels,logits=logits,name='cross_entropy_per_example')
+    cross_entropy_mean = tf.reduce_mean(cross_entropy,name='cross_entropy_mean')
+    tf.add_to_collection('losses',cross_entropy_mean)
+    return tf.add_n(tf.get_collection('losses'),name='total loss')
+
+def train(totalloss,global_step):
+    """
+
+    :param totalloss:
+    :param global_step:
+    :return:
+    """
