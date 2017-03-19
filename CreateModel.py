@@ -7,6 +7,9 @@ PROPORTION = 0.5
 LOCAL_3 = 400
 LOCAL_4 = 200
 CLASS_NUM = 5
+LEARNING_RATE = 0.1
+DECAY_STEP = 1000
+DECAY_RATE = 0.96
 BASE_DATA_PATH = 'd:/python/op/data'
 def generate_static_vector():
     """
@@ -124,10 +127,35 @@ def loss(logits,label):
     tf.add_to_collection('losses',cross_entropy_mean)
     return tf.add_n(tf.get_collection('losses'),name='total loss')
 
+def _add_loss_summaries(total_loss):
+
+
+  loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+  losses = tf.get_collection('losses')
+  loss_averages_op = loss_averages.apply(losses + [total_loss])
+
+  for l in losses + [total_loss]:
+    tf.summary.scalar(l.op.name + ' (raw)', l)
+    tf.summary.scalar(l.op.name, loss_averages.average(l))
+
+  return loss_averages_op
+
 def train(totalloss,global_step):
     """
+     根据生成的损失训练模型
 
     :param totalloss:
     :param global_step:
     :return:
     """
+    loss_average = _add_loss_summaries(total_loss=totalloss)
+    lr = tf.train.exponential_decay(LEARNING_RATE,global_step,DECAY_STEP,DECAY_RATE)
+    with tf.control_dependencies([loss_average]):
+        opt = tf.train.GradientDescentOptimizer(lr)
+        grad = opt.compute_gradients(totalloss)
+
+    apply = opt.apply_gradients(grads_and_vars=grad,global_step=global_step)
+    for var in tf.trainable_variables():
+        if grad is not None:
+            tf.summary.histogram(var.op.name+'/gradients',grad)
+    variable_averages = tf.train.ExponentialMovingAverage()
