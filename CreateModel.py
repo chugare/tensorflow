@@ -10,6 +10,7 @@ CLASS_NUM = 5
 LEARNING_RATE = 0.1
 DECAY_STEP = 1000
 DECAY_RATE = 0.96
+MOVING_AVERAGE_DECAY= 0.1
 BASE_DATA_PATH = 'd:/python/op/data'
 def generate_static_vector():
     """
@@ -158,4 +159,12 @@ def train(totalloss,global_step):
     for var in tf.trainable_variables():
         if grad is not None:
             tf.summary.histogram(var.op.name+'/gradients',grad)
-    variable_averages = tf.train.ExponentialMovingAverage()
+    #计算ema平均
+    variable_averages = tf.train.ExponentialMovingAverage(
+        MOVING_AVERAGE_DECAY,
+        global_step
+    )
+    va_op = variable_averages.apply(tf.trainable_variables())
+    with tf.control_dependencies([apply,va_op]):
+        train = tf.no_op(name='train')
+    return train
