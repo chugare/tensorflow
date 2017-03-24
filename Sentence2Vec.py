@@ -36,5 +36,5 @@ def input(textfile):
         for line in source_file:
             seg = str(line).split(' ')
             str_vec = _generate_vector_and_labels(seg)
-            yield str_vec
+            str_vec
     return
