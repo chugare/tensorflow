@@ -1,10 +1,11 @@
 import sys
+from imp import reload
 reload(sys)
 sys.setdefaultencoding('utf-8')
 import tensorflow as tf
 import jieba
 from gensim.models import Word2Vec
-BASE_PATH= ''
+BASE_PATH= 'D:/Python/op/data'
 WORD_VEC_FILE = ''
 DIC = None
 def _get_dic_file():
@@ -12,12 +13,12 @@ def _get_dic_file():
     try:
         dic = Word2Vec.load(BASE_PATH+WORD_VEC_FILE)
     except ImportError :
-        print 'File error'
+        print('File error')
     return dic
 def _generate_vector_and_labels(seg):
 
     if DIC is None:
-        print 'No dic initilized'
+        print('No dic initilized')
     label = seg[0]
     string_vec = []
     for word in seg[1:]:
@@ -38,3 +39,9 @@ def input(textfile):
             str_vec = _generate_vector_and_labels(seg)
             str_vec
     return
+
+def string_input(filequeue):
+    fq = tf.train.string_input_producer(filequeue)
+    reader = tf.TextLineReader(name='reader')
+    data = reader.read(fq)
+    
