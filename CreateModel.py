@@ -73,14 +73,14 @@ def interface(input_str):
             stddev=5e-2,
             wd=0.0
         )
-        conv = tf.nn.conv2d(input_str, kernel, [1, 1, 1, 1], padding="SAME")
+        conv = tf.nn.conv2d(input_str, kernel, [1, 1, 1, 1], padding="VALID")
         biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.0))
         pre_activation = tf.nn.bias_add(conv, biases)
         conv1 = tf.nn.relu(pre_activation, name = scope.name)
         _activation_summary(conv1)
     # pooling layer 1
 
-    pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pooling1')
+    pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='VALID', name='pooling1')
     # norm1
     norm1 = tf.nn.l2_normalize(pool1, 2)
 
