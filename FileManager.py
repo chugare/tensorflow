@@ -1,4 +1,4 @@
-8import tensorflow as tf
+import tensorflow as tf
 from gensim.models import Word2Vec
 import sys
 import jieba
@@ -37,24 +37,28 @@ class FileManager:
                 print(words)
                 vecs = []
                 try:
-                    if index == 0:
+                    if words[0] == u'\ufeff' or words[0]=='\n':
                         label = words[1]
                         word_alt = words[2:]
                     else:
                         label = words[0]
                         word_alt = words[1:]
 
-
                 except IndexError:
                     continue
                 index += 1
-                for word in word_alt:
+                for i in range(0,140):
+
                     try:
-                        vecs.extend(self.dic[word].tolist())
-                    except KeyError:
+                        vecs.extend(self.dic[word_alt[i]].tolist())
+                    except KeyError :
+
                         vecs.extend(self.Unknown_Vec)
                         continue
-                print('length:'+str(len(word_alt)))
+                    except IndexError :
+                        vecs.extend(self.Unknown_Vec)
+                        continue
+                print('length:'+str(len(vecs)))
                 example = tf.train.Example(features = tf.train.Features(feature = {
                     "label" : tf.train.Feature(int64_list = tf.train.Int64List(value = [int(label)])),
                     "vecs"  : tf.train.Feature(float_list = tf.train.FloatList(value=vecs))
@@ -62,7 +66,7 @@ class FileManager:
                 writer.write(example.SerializeToString())
         writer.close()
     def read_and_decode(self,filename):
-        fq = tf.train.string_input_producer([filename])
+        fq = tf.train.string_input_producer(filename)
         reader = tf.TFRecordReader()
         _, serialized_example = reader.read(fq)
         example = tf.parse_single_example(serialized_example, features={
@@ -70,22 +74,31 @@ class FileManager:
             'vecs' :tf.VarLenFeature(tf.float32)
         })
 
-        vecs = tf.sparse_reshape(example['vecs'],[-1,60])
-        vecs = tf.sparse_to_dense(vecs.indices,[-1,60],vecs.values)
+        vecs = tf.sparse_reshape(example['vecs'],[140,60,1])
+
+        vecs = tf.sparse_to_dense(vecs.indices,[140,60,1],vecs.values)
         vecs = tf.cast(vecs,tf.float32)
-        label = tf.cast(example['label'],tf.int32)
+        label = tf.cast(example['label'], tf.int32)
         return vecs, label
+def show_dic(fm):
+    fm._get_dic()
+    print(fm.dic)
+
 
 def main():
     fm = FileManager()
     filename = []
-    for i in range(0, 2):
-        filename.append(str(i)+'.txt')
-
+    for i in range(0,2):
+        try :
+            filename.append(str(i)+'.txt')
+        except IOError:
+            print('file "'+str(i)+'.txt" not exist')
     fm.generate_TFRecord_file(filename)
+
+
 def main2r():
     fm = FileManager()
-    vecs,label = fm.read_and_decode(fm.Base_Path+'data.tfrecords')
+    vecs,label = fm.read_and_decode([fm.Base_Path+'data.tfrecords'])
     vecbatch , labelbatch = tf.train.batch([vecs, label],3, 1)
     init = tf.global_variables_initializer()
     with tf.Session() as sess:

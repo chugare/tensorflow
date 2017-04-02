@@ -12,7 +12,7 @@ label = tf.convert_to_tensor(b,tf.float32)
 norms = []
 labels = []
 kernel = tf.Variable(tf.ones([2, 2, 1, 1]))
-nb = tf.ones([1, 5, 5, 1],name='input')
+nb = tf.ones([1, 10, 60, 1],name='input')
 var = tf.Variable(tf.convert_to_tensor(norm))
 
 mask = tf.random_uniform([2,5,5],minval=0.00,maxval=1.99)
@@ -25,11 +25,14 @@ vp = tf.floor(norm)
 get = vp*var
 var2 = tf.Variable(tf.zeros([5,6]),name='var2')
 conv = tf.nn.conv2d(nb, kernel, [1,1,1,1], 'VALID')
-dim = nb.get_shape()
-pool = tf.nn.max_pool(nb,[1,,2,1],[1,2,2,1],'VALID')
+dim = conv.get_shape()
+shape = tf.shape(conv)
+print(shape)
+print(dim)
+pool = tf.nn.max_pool(conv,[1,dim[1].value,dim[2].value,1],[1,1,1,1],'VALID')
 
 with tf.Session() as ss:
     ss.run(init)
-    print (kernel.eval(ss))
+
     result = ss.run(pool)
     print (result)
