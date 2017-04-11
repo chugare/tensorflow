@@ -1,5 +1,4 @@
 import tensorflow as tf
-
 a= []
 b = []
 for i in range(0,100):
@@ -31,7 +30,7 @@ print(shape)
 print(dim)
 pool = tf.nn.max_pool(conv,[1,dim[1].value,dim[2].value,1],[1,1,1,1],'VALID')
 
-with tf.Session() as ss:
+with tf.Session(config=tf.ConfigProto(log_device_placement = True)) as ss:
     ss.run(init)
 
     result = ss.run(pool)

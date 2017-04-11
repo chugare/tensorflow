@@ -3,11 +3,13 @@ from gensim.models import Word2Vec
 import sys
 import jieba
 from imp import reload
+import os
+import xml.sax
 reload(sys)
-print(u'\ufeff')
 class FileManager:
     Base_Path = 'D:/Python/op/data/'
     Unknown_Vec = []
+    counter = 0
     DIC_path = Base_Path+'Word60.model'
     def __init__(self):
         self._get_dic()
@@ -17,14 +19,15 @@ class FileManager:
     def _get_dic(self):
         try:
             self.dic = Word2Vec.load(self.DIC_path)
-        except IOError:
+        except IOError as i:
             print('Word Vector not found')
     def generate_TFRecord_file(self,filename):
         writer = tf.python_io.TFRecordWriter(self.Base_Path+'data.tfrecords')
         for file in filename:
             try:
-                fopen = open(self.Base_Path+file,'r',encoding='utf-8')
-            except IOError:
+                fopen = open(self.Base_Path+'labeled/'+file,'r',encoding='utf-8')
+            except IOError as i :
+                print(i)
                 print('file \''+file+'\' not found')
                 continue
             print ('analysis '+file+':')
@@ -33,8 +36,9 @@ class FileManager:
             for line in fopen:
 
                 words = jieba.lcut(str(line))
-                print('current line: '+str(index))
-                print(words)
+                sys.stdout.write('current word: '+str(self.counter)+'\t\tFile name:'+file+'\r')
+                sys.stdout.flush()
+                self.counter+=1
                 vecs = []
                 try:
                     if words[0] == u'\ufeff' or words[0]=='\n':
@@ -58,7 +62,6 @@ class FileManager:
                     except IndexError :
                         vecs.extend(self.Unknown_Vec)
                         continue
-                print('length:'+str(len(vecs)))
                 example = tf.train.Example(features = tf.train.Features(feature = {
                     "label" : tf.train.Feature(int64_list = tf.train.Int64List(value = [int(label)])),
                     "vecs"  : tf.train.Feature(float_list = tf.train.FloatList(value=vecs))
@@ -84,17 +87,53 @@ def show_dic(fm):
     fm._get_dic()
     print(fm.dic)
 
+class Weibo_handler(xml.sax.ContentHandler):
+    Currenttype = ''
+    label = 1
+    emontion = ''
+    txtfile = open('weibo.txt','w',encoding='utf-8')
+    content = ''
+    emotionlist = []
+    positive = ['高兴','喜好','惊讶']
+    negative = ['厌恶','恐惧','悲伤','愤怒']
+    middle = ['无','D','']
+    def startElement(self, name, attrs):
+
+        self.Currenttype = name
+        if name == 'sentence'and attrs['opinionated'] == 'Y':
+            try:
+                # if attrs['emotion-type'] not in self.emotionlist:
+                #     self.emotionlist.append(attrs['emotion-type'])
+                self.emontion = attrs['emotion-type']
+            except KeyError:
+                # if attrs['emotion-type1'] not in self.emotionlist:
+                #     self.emotionlist.append(attrs['emotion-type1'])
+                self.emontion = attrs['emotion-1-type']
+        elif name == 'sentence':
+            self.emontion = ''
+    def characters(self, content):
+        if self.Currenttype == 'sentence':
+            self.label = 1
+            if self.emontion in self.positive:
+                self.label = 0
+            elif self.emontion in self.negative:
+                self.label = 2
+            self.content = content
+    def endElement(self, name):
+        if self.Currenttype == 'sentence':
+            self.txtfile.write(str(self.label)+' '+self.content+'\n')
+        self.Currenttype =''
+
 
 def main():
     fm = FileManager()
-    filename = []
-    for i in range(0,2):
-        try :
-            filename.append(str(i)+'.txt')
-        except IOError:
-            print('file "'+str(i)+'.txt" not exist')
-    fm.generate_TFRecord_file(filename)
+    filename = os.listdir(fm.Base_Path+'labeled/')
 
+    fm.generate_TFRecord_file(filename)
+def readXML():
+    fm = FileManager()
+    xmlh = Weibo_handler()
+    res = xml.sax.parse(fm.Base_Path+'微博情绪标注语料.xml',xmlh)
 
 def main2r():
     fm = FileManager()

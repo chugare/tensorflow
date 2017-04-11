@@ -3,12 +3,13 @@ import CreateModel
 import FileManager
 import json
 import time
+import sys
 from datetime import datetime
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('train_dir', '/tmp/train', """
+tf.app.flags.DEFINE_string('train_dir', './tmp/train', """
 event logs + checkpoints
 """)
-tf.app.flags.DEFINE_integer('max_steps',10,"number of batchs to run")
+tf.app.flags.DEFINE_integer('max_steps',100000,"number of batchs to run")
 tf.app.flags.DEFINE_boolean('log_device_placement',False,"whether to log device placement")
 tf.app.flags.DEFINE_integer('log_frequency',10,"how often to log result")
 NUM_PER_BATCH = 100
@@ -39,7 +40,7 @@ def train():
             return
         logits = CreateModel.interface(logits = logits_batch)
         loss = CreateModel.loss(logits,label=labels_batch)
-        print(tf.global_variables())
+        #print(tf.global_variables())
         train_op = CreateModel.train(totalloss=loss,global_step=global_step)
         class _loghooker(tf.train.SessionRunHook):
             def begin(self):
@@ -58,8 +59,9 @@ def train():
                     loss_value = run_values.results
                     example_per_second = FLAGS.log_frequency * FLAGS.batch_size / duration
                     sec_per_batch = float(duration/FLAGS.log_frequency)
-                    format_str= ('%s:step %d,loss = %.2f(%.1f examples/sec;%.3f sec/batch)')
-                    print(format_str % (datetime.now(),self._step,loss_value,example_per_second,sec_per_batch))
+                    format_str= ('%s : step %d,loss = %.2f(%.1f examples/sec;%.3f sec/batch)')
+                    print(format_str % (datetime.now(), self._step,loss_value,example_per_second,sec_per_batch))
+
 
         with tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.train_dir,
