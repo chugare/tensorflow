@@ -1,13 +1,15 @@
+#encoding:utf-8
 import tensorflow as tf
 from gensim.models import Word2Vec
 import sys
 import jieba
+import settings
 from imp import reload
 import os
 import xml.sax
 reload(sys)
 class FileManager:
-    Base_Path = 'D:/Python/op/data/'
+    Base_Path = settings.BASE_Path
     Unknown_Vec = []
     counter = 0
     DIC_path = Base_Path+'Word60.model'
