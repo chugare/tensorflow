@@ -1,6 +1,6 @@
 {
   "BasePath":"D:/Python/op/data/",
   "BasePath_OS":"./data/",
-  "DataFile":"data.tfrecords",
+  "DataFile":"train.tfrecords",
   "EvaluateFile":"eval.tfrecords"
 }

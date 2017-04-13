@@ -17,7 +17,7 @@ DECAY_RATE = 0.96
 MOVING_AVERAGE_DECAY= 0.1
 BASE_DATA_PATH = 'd:/python/op/data'
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('batch_size', 128,
+tf.app.flags.DEFINE_integer('batch_size', BATCH_SIZE,
                             """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_string('data_dir', '/tmp/cifar10_data',
                            """Path to the CIFAR-10 data directory.""")

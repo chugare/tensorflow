@@ -1,5 +1,5 @@
 import tensorflow as tf
-import CreateModel
+import Create
 import FileManager
 import json
 import time
@@ -9,7 +9,7 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', './tmp/train', """
 event logs + checkpoints
 """)
-tf.app.flags.DEFINE_integer('max_steps',100000,"number of batchs to run")
+tf.app.flags.DEFINE_integer('max_steps',1000,"number of batchs to run")
 tf.app.flags.DEFINE_boolean('log_device_placement',False,"whether to log device placement")
 tf.app.flags.DEFINE_integer('log_frequency',10,"how often to log result")
 NUM_PER_BATCH = 100
@@ -31,17 +31,16 @@ def train():
         fm = FileManager.FileManager()
         try:
             logit ,label = fm.read_and_decode(FILE_LIST)
-            logits_batch , labels_batch = CreateModel.input(logit,label)
-            print(logits_batch)
-            print(labels_batch)
+            logits_batch , labels_batch = Create.input(logit, label)
+
         except IOError as e:
             print('File not find : ')
             print(e.errno)
             return
-        logits = CreateModel.interface(logits = logits_batch)
-        loss = CreateModel.loss(logits,label=labels_batch)
+        logits = Create.interface(logits = logits_batch)
+        loss = Create.loss(logits, label=labels_batch)
         #print(tf.global_variables())
-        train_op = CreateModel.train(totalloss=loss,global_step=global_step)
+        train_op = Create.train(totalloss=loss, global_step=global_step)
         class _loghooker(tf.train.SessionRunHook):
             def begin(self):
                 self._step = -1

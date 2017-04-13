@@ -17,7 +17,7 @@ DECAY_RATE = 0.96
 MOVING_AVERAGE_DECAY= 0.1
 BASE_DATA_PATH = 'd:/python/op/data'
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('batch_size', 128,
+tf.app.flags.DEFINE_integer('batch_size', BATCH_SIZE,
                             """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_string('data_dir', '/tmp/cifar10_data',
                            """Path to the CIFAR-10 data directory.""")
@@ -105,11 +105,12 @@ def interface(logits):
         dropout = norm1*mask
     # hidden layer 1
     with tf.variable_scope("local3") as scope:
-        reshape = tf.reshape(dropout,[BATCH_SIZE,-1])
-        dim = reshape.get_shape()[1].value
-        weights = _variable_with_wight_decay('weights',shape=[dim,LOCAL_3],stddev=0.04,wd = 0.004)
+        dim = dropout.get_shape()[0].value
+        dropout = tf.reshape(dropout,[dim,-1])
+        dim2 = dropout.get_shape()[1].value
+        weights = _variable_with_wight_decay('weights',shape=[dim2,LOCAL_3],stddev=0.04,wd = 0.004)
         biases = _variable_on_cpu('biases',[LOCAL_3],tf.constant_initializer(0.1))
-        local3 = tf.nn.relu(tf.matmul(reshape,weights)+biases,name=scope.name)
+        local3 = tf.nn.relu(tf.matmul(dropout,weights)+biases,name=scope.name)
         _activation_summary(local3)
     # hidden layer 2
     with tf.variable_scope("local4") as scope:

@@ -3,28 +3,37 @@ import tensorflow as tf
 from gensim.models import Word2Vec
 import sys
 import jieba
-import settings
 from imp import reload
 import os
 import xml.sax
+import json
 reload(sys)
 class FileManager:
-    Base_Path = settings.BASE_Path
+
+    Base_Path = ''
     Unknown_Vec = []
     counter = 0
-    DIC_path = Base_Path+'Word60.model'
+    DIC_path = ''
+    NUM_FOR_TRAIN = 30000
+
     def __init__(self):
-        self._get_dic()
+        settings = json.load(open('settings.json','r'))
+        self.Base_Path = settings['BasePath']
+        self.DIC_path = self.Base_Path + 'Word60.model'
         for i in range(0,60):
             self.Unknown_Vec.append(0.0)
+        self._get_dic()
         return
+
     def _get_dic(self):
         try:
             self.dic = Word2Vec.load(self.DIC_path)
         except IOError as i:
             print('Word Vector not found')
     def generate_TFRecord_file(self,filename):
-        writer = tf.python_io.TFRecordWriter(self.Base_Path+'data.tfrecords')
+        writer = tf.python_io.TFRecordWriter(self.Base_Path+'train.tfrecords')
+        w2 = tf.python_io.TFRecordWriter(self.Base_Path+'eval.tfrecords')
+        count = 0
         for file in filename:
             try:
                 fopen = open(self.Base_Path+'labeled/'+file,'r',encoding='utf-8')
@@ -38,8 +47,9 @@ class FileManager:
             for line in fopen:
 
                 words = jieba.lcut(str(line))
-                sys.stdout.write('current word: '+str(self.counter)+'\t\tFile name:'+file+'\r')
                 sys.stdout.flush()
+                sys.stdout.write('\rcurrent word: '+str(self.counter)+'\t\tFile name:'+file)
+
                 self.counter+=1
                 vecs = []
                 try:
@@ -68,7 +78,12 @@ class FileManager:
                     "label" : tf.train.Feature(int64_list = tf.train.Int64List(value = [int(label)])),
                     "vecs"  : tf.train.Feature(float_list = tf.train.FloatList(value=vecs))
                 }))
-                writer.write(example.SerializeToString())
+                if count<self.NUM_FOR_TRAIN:
+                    writer.write(example.SerializeToString())
+                    count += 1
+                else:
+                    w2.write(example.SerializeToString())
+                    count += 1
         writer.close()
     def read_and_decode(self,filename):
         fq = tf.train.string_input_producer(filename)
@@ -85,6 +100,18 @@ class FileManager:
         vecs = tf.cast(vecs,tf.float32)
         label = tf.cast(example['label'], tf.int32)
         return vecs, label
+    def vecs_generte(self,sentence):
+        words = jieba.lcut(sentence)
+        vecs = []
+        for i in range(0,140):
+            try:
+                vec = self.dic[words[i]]
+                vecs.append(vec)
+            except IndexError:
+                vecs.append(self.Unknown_Vec)
+            except KeyError:
+                vecs.append(self.Unknown_Vec)
+        return  vecs
 def show_dic(fm):
     fm._get_dic()
     print(fm.dic)
