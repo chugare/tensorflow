@@ -9,7 +9,7 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', './tmp/train', """
 event logs + checkpoints
 """)
-tf.app.flags.DEFINE_integer('max_steps',1000,"number of batchs to run")
+tf.app.flags.DEFINE_integer('max_steps',100000,"number of batchs to run")
 tf.app.flags.DEFINE_boolean('log_device_placement',False,"whether to log device placement")
 tf.app.flags.DEFINE_integer('log_frequency',10,"how often to log result")
 NUM_PER_BATCH = 100
@@ -20,10 +20,11 @@ with open('settings.json','r') as setting:
     data = json.load(setting)
 flist_str = data['DataFile']
 BASE_PATH = data['BasePath']
+Record_Path = data['BasePath']+data['RecordPath']
 LOCAL_FILE_LIST = str(flist_str).split(',')
 FILE_LIST = []
 for l in LOCAL_FILE_LIST:
-    s = BASE_PATH+l
+    s = Record_Path+l
     FILE_LIST.append(s)
 def train():
     with tf.Graph().as_default():

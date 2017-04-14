@@ -1,6 +1,7 @@
 {
-  "BasePath":"D:/Python/op/data/",
-  "BasePath_OS":"./data/",
+  "BasePath":"D:/Python/op/tensorflow/data/",
   "DataFile":"train.tfrecords",
-  "EvaluateFile":"eval.tfrecords"
+  "EvaluateFile":"eval.tfrecords",
+  "TxtPath":"labeled/np/",
+  "RecordPath":"records/"
 }

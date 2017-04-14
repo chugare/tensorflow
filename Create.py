@@ -2,24 +2,24 @@ import tensorflow as tf
 import numpy
 from gensim.models import Word2Vec
 VEC_SIZE = 60
-KERNEL_WIDTH = 5
+KERNEL_WIDTH = 7
 PROPORTION = 0.5
 BATCH_SIZE = 100
-CAPCITY = 10000
+CAPCITY = 100000
 MIN_AFTER_QUEUE = 5000
 CONV_OUT = 256
 LOCAL_3 = 4000
 LOCAL_4 = 200
-CLASS_NUM = 3
+CLASS_NUM = 2
 LEARNING_RATE = 0.1
 DECAY_STEP = 1000
-DECAY_RATE = 0.96
-MOVING_AVERAGE_DECAY= 0.1
+DECAY_RATE = 0.98
+MOVING_AVERAGE_DECAY= 0.2
 BASE_DATA_PATH = 'd:/python/op/data'
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('batch_size', BATCH_SIZE,
                             """Number of images to process in a batch.""")
-tf.app.flags.DEFINE_string('data_dir', '/tmp/cifar10_data',
+tf.app.flags.DEFINE_string('data_dir', './tmp/cifar10_data',
                            """Path to the CIFAR-10 data directory.""")
 tf.app.flags.DEFINE_boolean('use_fp16', False,
                             """Train the model using fp16.""")

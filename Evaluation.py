@@ -97,4 +97,5 @@ def single_evaluate():
                 vecs_raw = fm.vecs_generte(sentence)
                 res_run = sess.run(prediction_res,feed_dict={vecs_pl:vecs_raw})
                 print(res_run)
-single_evaluate()
+# single_evaluate()
+batch_evaluate()

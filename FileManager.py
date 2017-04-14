@@ -14,11 +14,14 @@ class FileManager:
     Unknown_Vec = []
     counter = 0
     DIC_path = ''
-    NUM_FOR_TRAIN = 30000
+    NUM_FOR_TRAIN = 4000
 
     def __init__(self):
         settings = json.load(open('settings.json','r'))
         self.Base_Path = settings['BasePath']
+
+        self.txtpath = self.Base_Path+settings['TxtPath']
+        self.recordpath = self.Base_Path+settings['RecordPath']
         self.DIC_path = self.Base_Path + 'Word60.model'
         for i in range(0,60):
             self.Unknown_Vec.append(0.0)
@@ -31,12 +34,17 @@ class FileManager:
         except IOError as i:
             print('Word Vector not found')
     def generate_TFRecord_file(self,filename):
-        writer = tf.python_io.TFRecordWriter(self.Base_Path+'train.tfrecords')
-        w2 = tf.python_io.TFRecordWriter(self.Base_Path+'eval.tfrecords')
+        try:
+            os.chdir(self.recordpath)
+        except Exception:
+            os.mkdir(self.recordpath)
+            os.chdir(self.recordpath)
+        writer = tf.python_io.TFRecordWriter(self.recordpath+'train.tfrecords')
+        w2 = tf.python_io.TFRecordWriter(self.recordpath+'eval.tfrecords')
         count = 0
         for file in filename:
             try:
-                fopen = open(self.Base_Path+'labeled/'+file,'r',encoding='utf-8')
+                fopen = open(self.txtpath+file,'r',encoding='utf-8')
             except IOError as i :
                 print(i)
                 print('file \''+file+'\' not found')
@@ -156,7 +164,7 @@ class Weibo_handler(xml.sax.ContentHandler):
 
 def main():
     fm = FileManager()
-    filename = os.listdir(fm.Base_Path+'labeled/')
+    filename = os.listdir(fm.txtpath)
 
     fm.generate_TFRecord_file(filename)
 def readXML():
