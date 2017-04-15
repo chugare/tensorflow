@@ -74,8 +74,8 @@ def batch_evaluate():
 
 def single_evaluate():
     with tf.Graph().as_default() as g:
-        vecs_pl = tf.placeholder(tf.float32,[140,60])
-        vecs_batch = tf.reshape(vecs_pl,[1,140,60,1])
+        vecs_pl = tf.placeholder(tf.float32,[140,300])
+        vecs_batch = tf.reshape(vecs_pl,[1,140,300,1])
         #vecs_batch = tf.train.shuffle_batch([vecs],1,1000,10)
         prediction_res = Create.interface(vecs_batch)
 

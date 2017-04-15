@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy
 from gensim.models import Word2Vec
-VEC_SIZE = 60
+VEC_SIZE = 300
 KERNEL_WIDTH = 5
 PROPORTION = 0.9
 BATCH_SIZE = 100

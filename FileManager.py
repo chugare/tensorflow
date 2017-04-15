@@ -15,14 +15,14 @@ class FileManager:
     counter = 0
     DIC_path = ''
     NUM_FOR_TRAIN = 4000
-
+    VEC_SIZE = 300
     def __init__(self):
         settings = json.load(open('settings.json','r'))
         self.Base_Path = settings['BasePath']
 
         self.txtpath = self.Base_Path+settings['TxtPath']
         self.recordpath = self.Base_Path+settings['RecordPath']
-        self.DIC_path = self.Base_Path + 'Word60.model'
+        self.DIC_path = self.Base_Path +'model'
         for i in range(0,60):
             self.Unknown_Vec.append(0.0)
         self._get_dic()
@@ -33,7 +33,7 @@ class FileManager:
             self.dic = Word2Vec.load(self.DIC_path)
         except IOError as i:
             print('Word Vector not found')
-    def generate_TFRecord_file(self,filename):
+    def generate_TFRecord_file(self,filename,word_seg):
         try:
             os.chdir(self.recordpath)
         except Exception:
@@ -53,8 +53,12 @@ class FileManager:
             labels = []
             index = 0
             for line in fopen:
+                if word_seg :
+                    words = jieba.lcut(str(line))
+                    print(words)
+                else:
+                    words = line
 
-                words = jieba.lcut(str(line))
                 sys.stdout.flush()
                 sys.stdout.write('\rcurrent word: '+str(self.counter)+'\t\tFile name:'+file)
 
@@ -76,6 +80,7 @@ class FileManager:
                     try:
                         vecs.extend(self.dic[word_alt[i]].tolist())
                     except KeyError :
+                        print(word_alt[i]+ " : not found")
 
                         vecs.extend(self.Unknown_Vec)
                         continue
@@ -102,9 +107,9 @@ class FileManager:
             'vecs' :tf.VarLenFeature(tf.float32)
         })
 
-        vecs = tf.sparse_reshape(example['vecs'],[140,60,1])
+        vecs = tf.sparse_reshape(example['vecs'],[140,self.VEC_SIZE,1])
 
-        vecs = tf.sparse_to_dense(vecs.indices,[140,60,1],vecs.values)
+        vecs = tf.sparse_to_dense(vecs.indices,[140,self.VEC_SIZE,1],vecs.values)
         vecs = tf.cast(vecs,tf.float32)
         label = tf.cast(example['label'], tf.int32)
         return vecs, label
@@ -166,7 +171,7 @@ def main():
     fm = FileManager()
     filename = os.listdir(fm.txtpath)
 
-    fm.generate_TFRecord_file(filename)
+    fm.generate_TFRecord_file(filename,False)
 def readXML():
     fm = FileManager()
     xmlh = Weibo_handler()
