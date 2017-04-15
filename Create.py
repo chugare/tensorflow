@@ -2,20 +2,21 @@ import tensorflow as tf
 import numpy
 from gensim.models import Word2Vec
 VEC_SIZE = 60
-KERNEL_WIDTH = 7
-PROPORTION = 0.5
+KERNEL_WIDTH = 5
+PROPORTION = 0.9
 BATCH_SIZE = 100
 CAPCITY = 100000
 MIN_AFTER_QUEUE = 5000
-CONV_OUT = 256
+CONV_OUT = 100
 LOCAL_3 = 4000
 LOCAL_4 = 200
 CLASS_NUM = 2
 LEARNING_RATE = 0.1
+LEARNING_RATE_DECAY_FACTOR = 0.1
 DECAY_STEP = 1000
 DECAY_RATE = 0.98
-MOVING_AVERAGE_DECAY= 0.2
-BASE_DATA_PATH = 'd:/python/op/data'
+MOVING_AVERAGE_DECAY= 0.99
+
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('batch_size', BATCH_SIZE,
                             """Number of images to process in a batch.""")
@@ -72,7 +73,7 @@ def _variable_with_wight_decay(name,shape,stddev,wd):
         tf.add_to_collection('losses',weight_decay)
     return var
 def input (logits,labels):
-    num_of_threads = 16
+    num_of_threads = 4
     logits_ , labels_ = tf.train.shuffle_batch([logits,labels],BATCH_SIZE,CAPCITY,MIN_AFTER_QUEUE,num_of_threads)
     return logits_, tf.reshape(labels_, [BATCH_SIZE])
 def interface(logits):
@@ -108,13 +109,13 @@ def interface(logits):
         dim = dropout.get_shape()[0].value
         dropout = tf.reshape(dropout,[dim,-1])
         dim2 = dropout.get_shape()[1].value
-        weights = _variable_with_wight_decay('weights',shape=[dim2,LOCAL_3],stddev=0.04,wd = 0.004)
+        weights = _variable_with_wight_decay('weights',shape=[dim2,LOCAL_3],stddev=0.04,wd = 0.002)
         biases = _variable_on_cpu('biases',[LOCAL_3],tf.constant_initializer(0.1))
         local3 = tf.nn.relu(tf.matmul(dropout,weights)+biases,name=scope.name)
         _activation_summary(local3)
     # hidden layer 2
     with tf.variable_scope("local4") as scope:
-        weights = _variable_with_wight_decay('weights',shape=[LOCAL_3,LOCAL_4],stddev=0.04,wd=0.004)
+        weights = _variable_with_wight_decay('weights',shape=[LOCAL_3,LOCAL_4],stddev=0.04,wd=0.002)
         biases = _variable_on_cpu('biases',shape=[LOCAL_4],initializer=tf.constant_initializer(0.1))
         local4 = tf.nn.relu(tf.matmul(local3,weights)+biases,name = scope.name)
         _activation_summary(local4)
@@ -122,7 +123,7 @@ def interface(logits):
     #softmax 对于原数据进行了线性变化
 
     with tf.variable_scope('softmax_linear') as scope:
-        weights = _variable_with_wight_decay('weights',shape=[LOCAL_4,CLASS_NUM],stddev= 1/192.0,wd=0.004)
+        weights = _variable_with_wight_decay('weights',shape=[LOCAL_4,CLASS_NUM],stddev= 1/192.0,wd=0.002)
         biases = _variable_on_cpu('biases',shape=[CLASS_NUM],initializer=tf.constant_initializer(0.0))
         softmax_linear = tf.add(tf.matmul(local4,weights),biases,name='softmax')
 
@@ -163,7 +164,7 @@ def train(totalloss,global_step):
     :return:
     """
     loss_average = _add_loss_summaries(total_loss=totalloss)
-    lr = tf.train.exponential_decay(LEARNING_RATE,global_step,DECAY_STEP,DECAY_RATE)
+    lr = tf.train.exponential_decay(LEARNING_RATE, global_step, DECAY_STEP, LEARNING_RATE_DECAY_FACTOR)
     with tf.control_dependencies([loss_average]):
         opt = tf.train.GradientDescentOptimizer(lr)
         grads = opt.compute_gradients(totalloss)
@@ -176,7 +177,7 @@ def train(totalloss,global_step):
     for grad, var in grads:
         if grad is not None:
             tf.summary.histogram(var.op.name + '/gradients', grad)
-    #计算ema平均
+    # 计算ema平均
     variable_averages = tf.train.ExponentialMovingAverage(
         MOVING_AVERAGE_DECAY,
         global_step

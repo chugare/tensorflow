@@ -9,11 +9,11 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', './tmp/train', """
 event logs + checkpoints
 """)
-tf.app.flags.DEFINE_integer('max_steps',100000,"number of batchs to run")
+tf.app.flags.DEFINE_integer('max_steps',10000,"number of batchs to run")
 tf.app.flags.DEFINE_boolean('log_device_placement',False,"whether to log device placement")
 tf.app.flags.DEFINE_integer('log_frequency',10,"how often to log result")
 NUM_PER_BATCH = 100
-MAX_STEP =10000
+
 
 
 with open('settings.json','r') as setting:

@@ -7,6 +7,7 @@ import numpy
 tf = FM.tf
 SETTINGS = json.load(open('settings.json', 'r'))
 BASE_PATH = SETTINGS['BasePath']
+Record_path = BASE_PATH+SETTINGS['RecordPath']
 FILE = SETTINGS['EvaluateFile']
 FLAGS = tf.app.flags.FLAGS
 
@@ -58,7 +59,7 @@ def eval_once(saver, summary_op, top_k_op, summary_writer):
 def batch_evaluate():
     with tf.Graph().as_default() as g:
         fm = FM.FileManager()
-        vecs, label = fm.read_and_decode([BASE_PATH + FILE])
+        vecs, label = fm.read_and_decode([Record_path + FILE])
         vecs, label = Create.input(vecs, label)
         logits = Create.interface(logits=vecs)
         top_k = tf.nn.in_top_k(logits, label, 1)
@@ -97,5 +98,13 @@ def single_evaluate():
                 vecs_raw = fm.vecs_generte(sentence)
                 res_run = sess.run(prediction_res,feed_dict={vecs_pl:vecs_raw})
                 print(res_run)
-# single_evaluate()
+single_evaluate()
 batch_evaluate()
+def main(args):
+    if args == 's':
+        single_evaluate()
+    elif args == 'b':
+        batch_evaluate()
+if __name__ == '__main__':
+
+    main(input())
