@@ -3,6 +3,7 @@ import Create
 import FileManager
 import json
 import time
+import numpy as np
 import sys
 from datetime import datetime
 FLAGS = tf.app.flags.FLAGS
@@ -40,8 +41,12 @@ def train():
             return
         logits = Create.interface(logits = logits_batch)
         loss = Create.loss(logits, label=labels_batch)
+        p = tf.nn.in_top_k(logits,labels_batch,1)
+        p_int = tf.cast(p,tf.int32)
+        ap = tf.reduce_sum(p_int)
+        with tf.control_dependencies([ap]):
         #print(tf.global_variables())
-        train_op = Create.train(totalloss=loss, global_step=global_step)
+            train_op = Create.train(totalloss=loss, global_step=global_step)
         class _loghooker(tf.train.SessionRunHook):
             def begin(self):
                 self._step = -1
@@ -57,17 +62,35 @@ def train():
                     duration = current_time - self._start_time
                     self._start_time = current_time
                     loss_value = run_values.results
+
+                    print(loss_value)
                     example_per_second = FLAGS.log_frequency * FLAGS.batch_size / duration
                     sec_per_batch = float(duration/FLAGS.log_frequency)
                     format_str= ('%s : step %d,loss = %.2f(%.1f examples/sec;%.3f sec/batch)')
                     print(format_str % (datetime.now(), self._step,loss_value,example_per_second,sec_per_batch))
+        class _loghooker_pres(tf.train.SessionRunHook):
+            def begin(self):
+                self._step = -1
+                self._start_time = time.time()
+                pass
+            def before_run(self,run_context):
+                self._step+=1
+                return tf.train.SessionRunArgs(ap)
+                pass
+            def after_run(self, run_context, run_values):
+                if self._step%FLAGS.log_frequency == 0:
+                    current_time = time.time()
+                    duration = current_time - self._start_time
+                    self._start_time = current_time
+                    loss_value = run_values.results/FLAGS.batch_size
 
-
+                    print(loss_value)
         with tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.train_dir,
             hooks=[tf.train.StopAtStepHook(last_step=FLAGS.max_steps),
                    tf.train.NanTensorHook(loss),
-                   _loghooker()],
+                   _loghooker(),
+                   _loghooker_pres()],
             config = tf.ConfigProto(log_device_placement = FLAGS.log_device_placement)
         ) as mon_sess:
 

@@ -23,7 +23,7 @@ class FileManager:
         self.txtpath = self.Base_Path+settings['TxtPath']
         self.recordpath = self.Base_Path+settings['RecordPath']
         self.DIC_path = self.Base_Path +'model'
-        for i in range(0,60):
+        for i in range(0,self.VEC_SIZE):
             self.Unknown_Vec.append(0.0)
         self._get_dic()
         return
@@ -114,7 +114,8 @@ class FileManager:
         label = tf.cast(example['label'], tf.int32)
         return vecs, label
     def vecs_generte(self,sentence):
-        words = jieba.lcut(sentence)
+        words = sentence
+        #words = jieba.lcut(sentence)
         vecs = []
         for i in range(0,140):
             try:
