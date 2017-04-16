@@ -49,6 +49,7 @@ def train():
             train_op = Create.train(totalloss=loss, global_step=global_step)
         class _loghooker(tf.train.SessionRunHook):
             def begin(self):
+
                 self._step = -1
                 self._start_time = time.time()
                 pass
@@ -70,6 +71,7 @@ def train():
                     print(format_str % (datetime.now(), self._step,loss_value,example_per_second,sec_per_batch))
         class _loghooker_pres(tf.train.SessionRunHook):
             def begin(self):
+                self._all_true = 0
                 self._step = -1
                 self._start_time = time.time()
                 pass
@@ -78,13 +80,13 @@ def train():
                 return tf.train.SessionRunArgs(ap)
                 pass
             def after_run(self, run_context, run_values):
-                if self._step%FLAGS.log_frequency == 0:
-                    current_time = time.time()
-                    duration = current_time - self._start_time
-                    self._start_time = current_time
-                    loss_value = run_values.results/FLAGS.batch_size
+                true_num = run_values.results
+                self._all_true +=true_num
 
-                    print(loss_value)
+                if self._step%FLAGS.log_frequency == 0:
+
+                    print(self._all_true/FLAGS.log_frequency/FLAGS.batch_size)
+                    self._all_true = 0
         with tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.train_dir,
             hooks=[tf.train.StopAtStepHook(last_step=FLAGS.max_steps),
