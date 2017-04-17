@@ -1,7 +1,10 @@
 import tensorflow as tf
 
 VEC_SIZE = 300
-KERNEL_WIDTH = 7
+KERNEL_WIDTH = 3
+
+KERNEL_WIDTH2 = 5
+KERNEL_WIDTH3 = 7
 PROPORTION = 0.5
 BATCH_SIZE = 50
 CAPCITY = 100000
@@ -77,7 +80,7 @@ def input (logits,labels):
     return logits_, tf.reshape(labels_, [BATCH_SIZE])
 def interface(logits):
 
-    with tf.variable_scope("conv1") as scope:
+    with tf.variable_scope("conv3") as scope:
 
         kernel = _variable_with_wight_decay(
             name='weight',
@@ -86,23 +89,57 @@ def interface(logits):
             wd=0.0
         )
         conv = tf.nn.conv2d(logits, kernel, [1, 1, 1, 1], padding="VALID")
-        biases = _variable_on_cpu('biases', [CONV_OUT], tf.constant_initializer(0.0))
+        biases = _variable_on_cpu('biases1', [CONV_OUT], tf.constant_initializer(0.0))
         pre_activation = tf.nn.bias_add(conv, biases)
         conv1 = tf.nn.relu(pre_activation, name = scope.name)
         _activation_summary(conv1)
+    with tf.variable_scope("conv5") as scope:
+        kernel = _variable_with_wight_decay(
+            name='weight',
+            shape=[KERNEL_WIDTH2, VEC_SIZE, 1, CONV_OUT],
+            stddev=5e-2,
+            wd=0.0
+        )
+        conv2 = tf.nn.conv2d(logits, kernel, [1, 1, 1, 1], padding="VALID")
+        biases2 = _variable_on_cpu('biases2', [CONV_OUT], tf.constant_initializer(0.0))
+        pre_activation = tf.nn.bias_add(conv2, biases2)
+        conv2 = tf.nn.relu(pre_activation, name=scope.name)
+        _activation_summary(conv2)
+    with tf.variable_scope("conv7") as scope:
+        kernel = _variable_with_wight_decay(
+            name='weight',
+            shape=[KERNEL_WIDTH3, VEC_SIZE, 1, CONV_OUT],
+            stddev=5e-2,
+            wd=0.0
+        )
+        conv3 = tf.nn.conv2d(logits, kernel, [1, 1, 1, 1], padding="VALID")
+        biases3 = _variable_on_cpu('biases3', [CONV_OUT], tf.constant_initializer(0.0))
+        pre_activation = tf.nn.bias_add(conv3, biases3)
+        conv3 = tf.nn.relu(pre_activation, name=scope.name)
+        _activation_summary(conv3)
+
     # pooling layer 1
     length = conv1.get_shape()
     pool1 = tf.nn.max_pool(conv1, ksize=[1, length[1].value , length[2].value, 1], strides=[1, 2, 2, 1], padding='VALID', name='pooling1')
     # norm1
     norm1 = tf.nn.l2_normalize(pool1, 2)
+    length = conv2.get_shape()
+    pool2 = tf.nn.max_pool(conv2, ksize=[1, length[1].value , length[2].value, 1], strides=[1, 2, 2, 1], padding='VALID', name='pooling1')
+    # norm1
+    norm2 = tf.nn.l2_normalize(pool2, 2)
+    length = conv3.get_shape()
+    pool3= tf.nn.max_pool(conv3, ksize=[1, length[1].value , length[2].value, 1], strides=[1, 2, 2, 1], padding='VALID', name='pooling1')
+    # norm1
+    norm3 = tf.nn.l2_normalize(pool3, 2)
 
+    norm = tf.concat([norm1,norm2,norm3],2)
     #drop out layer
     with tf.variable_scope("dropout") as scope:
-        dim = norm1.get_shape()
+        dim = norm.get_shape()
         rv = tf.random_uniform(dim,minval=PROPORTION,maxval=1+PROPORTION)
 
         mask = tf.floor(rv)
-        dropout = norm1*mask
+        dropout = norm*mask
     # hidden layer 1
     with tf.variable_scope("local3") as scope:
         dim = dropout.get_shape()[0].value
