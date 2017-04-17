@@ -81,6 +81,7 @@ def train():
         class _loghooker_zeros(tf.train.SessionRunHook):
             def begin(self):
                 self._step = -1
+                self.all = 0
                 self._start_time = time.time()
                 pass
 
@@ -91,7 +92,10 @@ def train():
 
             def after_run(self, run_context, run_values):
                 zs = run_values.results
-                print( zs / FLAGS.batch_size)
+                if self._step%FLAGS.log_frequency==0:
+                    self.all+=zs
+                    print('zeros:'+ str(all / FLAGS.batch_size/FLAGS.log_frequency))
+                    self.all = 0
 
         class _loghooker_ones(tf.train.SessionRunHook):
             def begin(self):
