@@ -6,10 +6,10 @@ KERNEL_WIDTH = 3
 KERNEL_WIDTH2 = 5
 KERNEL_WIDTH3 = 7
 PROPORTION = 0.5
-BATCH_SIZE = 50
+BATCH_SIZE = 20
 CAPCITY = 100000
 MIN_AFTER_QUEUE = 5000
-CONV_OUT = 100
+CONV_OUT = 20
 LOCAL_3 = 300
 LOCAL_4 = 200
 CLASS_NUM = 2
@@ -145,13 +145,13 @@ def interface(logits):
         dim = dropout.get_shape()[0].value
         dropout = tf.reshape(dropout,[dim,-1])
         dim2 = dropout.get_shape()[1].value
-        weights = _variable_with_wight_decay('weights',shape=[dim2,LOCAL_3],stddev=0.04,wd = 0.002)
+        weights = _variable_with_wight_decay('weights',shape=[dim2,LOCAL_3],stddev=0.04,wd = 0.00)
         biases = _variable_on_cpu('biases',[LOCAL_3],tf.constant_initializer(0.1))
         local3 = tf.nn.relu(tf.matmul(dropout,weights)+biases,name=scope.name)
         _activation_summary(local3)
     # hidden layer 2
     with tf.variable_scope("local4") as scope:
-        weights = _variable_with_wight_decay('weights',shape=[LOCAL_3,LOCAL_4],stddev=0.04,wd=0.002)
+        weights = _variable_with_wight_decay('weights',shape=[LOCAL_3,LOCAL_4],stddev=0.04,wd=0.00)
         biases = _variable_on_cpu('biases',shape=[LOCAL_4],initializer=tf.constant_initializer(0.1))
         local4 = tf.nn.relu(tf.matmul(local3,weights)+biases,name = scope.name)
         _activation_summary(local4)
@@ -159,7 +159,7 @@ def interface(logits):
     #softmax 对于原数据进行了线性变化
 
     with tf.variable_scope('softmax_linear') as scope:
-        weights = _variable_with_wight_decay('weights',shape=[LOCAL_4,CLASS_NUM],stddev= 1/192.0,wd=0.002)
+        weights = _variable_with_wight_decay('weights',shape=[LOCAL_4,CLASS_NUM],stddev= 1/192.0,wd=0.00)
         biases = _variable_on_cpu('biases',shape=[CLASS_NUM],initializer=tf.constant_initializer(0.0))
         softmax_linear = tf.add(tf.matmul(local4,weights),biases,name='softmax')
 
