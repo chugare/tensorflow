@@ -41,8 +41,8 @@ def train():
             return
         logits = Create.interface(logits = logits_batch)
         loss = Create.loss(logits, label=labels_batch)
-        zero_label = tf.zeros([FLAGS.batch_size])
-        one_label = tf.ones([FLAGS.batch_size])
+        zero_label = tf.zeros([FLAGS.batch_size],tf.int32)
+        one_label = tf.ones([FLAGS.batch_size],tf.int32)
         p = tf.nn.in_top_k(logits,labels_batch,1)
         z_ls = tf.nn.in_top_k(logits,zero_label,1)
         one_ls = tf.nn.in_top_k(logits,one_label,1)
