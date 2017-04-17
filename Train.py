@@ -41,10 +41,19 @@ def train():
             return
         logits = Create.interface(logits = logits_batch)
         loss = Create.loss(logits, label=labels_batch)
+        zero_label = tf.zeros([FLAGS.batch_size])
+        one_label = tf.ones([FLAGS.batch_size])
         p = tf.nn.in_top_k(logits,labels_batch,1)
+        z_ls = tf.nn.in_top_k(logits,zero_label,1)
+        one_ls = tf.nn.in_top_k(logits,one_label,1)
         p_int = tf.cast(p,tf.int32)
+        z_int = tf.cast(z_ls,tf.int32)
+        one_int = tf.cast(one_ls,tf.int32)
         ap = tf.reduce_sum(p_int)
-        with tf.control_dependencies([ap]):
+        zn = tf.reduce_sum(z_int)
+        onen = tf.reduce_sum(one_int)
+
+        with tf.control_dependencies([ap,zn,onen]):
         #print(tf.global_variables())
             train_op = Create.train(totalloss=loss, global_step=global_step)
         class _loghooker(tf.train.SessionRunHook):
@@ -64,11 +73,41 @@ def train():
                     self._start_time = current_time
                     loss_value = run_values.results
 
-                    print(loss_value)
                     example_per_second = FLAGS.log_frequency * FLAGS.batch_size / duration
                     sec_per_batch = float(duration/FLAGS.log_frequency)
                     format_str= ('%s : step %d,loss = %.2f(%.1f examples/sec;%.3f sec/batch)')
                     print(format_str % (datetime.now(), self._step,loss_value,example_per_second,sec_per_batch))
+
+        class _loghooker_zeros(tf.train.SessionRunHook):
+            def begin(self):
+                self._step = -1
+                self._start_time = time.time()
+                pass
+
+            def before_run(self, run_context):
+                self._step += 1
+                return tf.train.SessionRunArgs(zn)
+                pass
+
+            def after_run(self, run_context, run_values):
+                zs = run_values.results
+                print( zs / FLAGS.batch_size)
+
+        class _loghooker_ones(tf.train.SessionRunHook):
+            def begin(self):
+                self._step = -1
+                self._start_time = time.time()
+                pass
+
+            def before_run(self, run_context):
+                self._step += 1
+                return tf.train.SessionRunArgs(onen)
+                pass
+
+            def after_run(self, run_context, run_values):
+                ones = run_values.results
+                print(ones / FLAGS.batch_size)
+
         class _loghooker_pres(tf.train.SessionRunHook):
             def begin(self):
                 self._all_true = 0
@@ -92,7 +131,9 @@ def train():
             hooks=[tf.train.StopAtStepHook(last_step=FLAGS.max_steps),
                    tf.train.NanTensorHook(loss),
                    _loghooker(),
-                   _loghooker_pres()],
+                   _loghooker_pres(),
+                   _loghooker_ones(),
+                   _loghooker_zeros()],
             config = tf.ConfigProto(log_device_placement = FLAGS.log_device_placement)
         ) as mon_sess:
 
