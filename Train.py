@@ -92,8 +92,9 @@ def train():
 
             def after_run(self, run_context, run_values):
                 zs = run_values.results
+                self.all += zs
                 if self._step%FLAGS.log_frequency==0:
-                    self.all+=zs
+
                     print('zeros:'+ str(self.all/FLAGS.batch_size/FLAGS.log_frequency))
                     self.all = 0
 
