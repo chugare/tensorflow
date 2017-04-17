@@ -110,7 +110,7 @@ def interface(logits):
         dim2 = dropout.get_shape()[1].value
         weights = _variable_with_wight_decay('weights',shape=[dim2,LOCAL_3],stddev=0.04,wd = 0.002)
         biases = _variable_on_cpu('biases',[LOCAL_3],tf.constant_initializer(0.1))
-        local3 = tf.nn.relu(tf.matmul(norm1,weights)+biases,name=scope.name)
+        local3 = tf.nn.relu(tf.matmul(dropout,weights)+biases,name=scope.name)
         _activation_summary(local3)
     # hidden layer 2
     with tf.variable_scope("local4") as scope:
