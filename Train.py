@@ -132,7 +132,6 @@ def train():
                    tf.train.NanTensorHook(loss),
                    _loghooker(),
                    _loghooker_pres(),
-                   _loghooker_ones(),
                    _loghooker_zeros()],
             config = tf.ConfigProto(log_device_placement = FLAGS.log_device_placement)
         ) as mon_sess:
