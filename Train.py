@@ -94,7 +94,7 @@ def train():
                 zs = run_values.results
                 if self._step%FLAGS.log_frequency==0:
                     self.all+=zs
-                    print('zeros:'+ str(all / FLAGS.batch_size/FLAGS.log_frequency))
+                    print('zeros:'+ str(self.all/FLAGS.batch_size/FLAGS.log_frequency))
                     self.all = 0
 
         class _loghooker_ones(tf.train.SessionRunHook):
