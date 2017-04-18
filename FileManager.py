@@ -53,6 +53,7 @@ class FileManager:
             labels = []
             index = 0
             for line in fopen:
+
                 if word_seg :
                     words = jieba.lcut(str(line))
                     print(words)
@@ -60,12 +61,10 @@ class FileManager:
                     words = line
 
                 sys.stdout.flush()
-                sys.stdout.write('\rcurrent word: '+str(self.counter)+'\t\tFile name:'+file)
-
                 self.counter+=1
                 vecs = []
                 try:
-                    if words[0] == u'\ufeff' or words[0]=='\n':
+                    if words[0] == u'\ufeff' or words[0] =='\n':
                         label = words[1]
                         word_alt = words[2:]
                     else:
@@ -75,6 +74,9 @@ class FileManager:
                 except IndexError:
                     continue
                 index += 1
+
+                sys.stdout.write('\r--->current word: '+str(index)+' ' +line)
+
                 for i in range(0,140):
 
                     try:
