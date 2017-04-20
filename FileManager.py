@@ -15,14 +15,14 @@ class FileManager:
     counter = 0
     DIC_path = ''
     NUM_FOR_TRAIN = 4000
-    VEC_SIZE = 300
+    VEC_SIZE = 60
     def __init__(self):
         settings = json.load(open('settings.json','r'))
         self.Base_Path = settings['BasePath']
 
         self.txtpath = self.Base_Path+settings['TxtPath']
         self.recordpath = self.Base_Path+settings['RecordPath']
-        self.DIC_path = self.Base_Path +'model'
+        self.DIC_path = self.Base_Path +'Word60.model'
         for i in range(0,self.VEC_SIZE):
             self.Unknown_Vec.append(0.0)
         self._get_dic()
@@ -174,7 +174,7 @@ def main():
     fm = FileManager()
     filename = os.listdir(fm.txtpath)
 
-    fm.generate_TFRecord_file(filename,False)
+    fm.generate_TFRecord_file(filename,True)
 def readXML():
     fm = FileManager()
     xmlh = Weibo_handler()

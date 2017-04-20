@@ -1,19 +1,19 @@
 import tensorflow as tf
 
-VEC_SIZE = 300
+VEC_SIZE = 60
 KERNEL_WIDTH = 3
 
 KERNEL_WIDTH2 = 5
 KERNEL_WIDTH3 = 7
-PROPORTION = 0.5
+PROPORTION = 1.0
 BATCH_SIZE = 100
 CAPCITY = 100000
 MIN_AFTER_QUEUE = 5000
-CONV_OUT = 100
-LOCAL_3 = 500
+CONV_OUT = 128
+LOCAL_3 = 300
 LOCAL_4 = 200
 CLASS_NUM = 2
-LEARNING_RATE = 0.1
+LEARNING_RATE = 0.001
 LEARNING_RATE_DECAY_FACTOR = 0.1
 DECAY_STEP = 1000
 DECAY_RATE = 0.98
@@ -120,17 +120,20 @@ def interface(logits):
 
     # pooling layer 1
     length = conv1.get_shape()
+
     pool1 = tf.nn.max_pool(conv1, ksize=[1, length[1].value , length[2].value, 1], strides=[1, 2, 2, 1], padding='VALID', name='pooling1')
     # norm1
-    norm1 = tf.nn.l2_normalize(pool1, 2)
+    norm1 = tf.nn.l2_normalize(pool1, 3)
+
     length = conv2.get_shape()
     pool2 = tf.nn.max_pool(conv2, ksize=[1, length[1].value , length[2].value, 1], strides=[1, 2, 2, 1], padding='VALID', name='pooling1')
     # norm1
-    norm2 = tf.nn.l2_normalize(pool2, 2)
+    norm2 = tf.nn.l2_normalize(pool2, 3)
+
     length = conv3.get_shape()
     pool3= tf.nn.max_pool(conv3, ksize=[1, length[1].value , length[2].value, 1], strides=[1, 2, 2, 1], padding='VALID', name='pooling1')
     # norm1
-    norm3 = tf.nn.l2_normalize(pool3, 2)
+    norm3 = tf.nn.l2_normalize(pool3, 3)
 
     norm = tf.concat([norm1,norm2,norm3],2)
     #drop out layer
@@ -144,24 +147,25 @@ def interface(logits):
     with tf.variable_scope("local3") as scope:
         dim = dropout.get_shape()[0].value
         dropout = tf.reshape(dropout,[dim,-1])
-        dim2 = dropout.get_shape()[1].value
-        weights = _variable_with_wight_decay('weights',shape=[dim2,LOCAL_3],stddev=0.04,wd = 0.00)
-        biases = _variable_on_cpu('biases',[LOCAL_3],tf.constant_initializer(0.1))
-        local3 = tf.nn.relu(tf.matmul(dropout,weights)+biases,name=scope.name)
-        _activation_summary(local3)
-    # hidden layer 2
-    with tf.variable_scope("local4") as scope:
-        weights = _variable_with_wight_decay('weights',shape=[LOCAL_3,LOCAL_4],stddev=0.04,wd=0.001)
-        biases = _variable_on_cpu('biases',shape=[LOCAL_4],initializer=tf.constant_initializer(0.1))
-        local4 = tf.nn.relu(tf.matmul(local3,weights)+biases,name = scope.name)
-        _activation_summary(local4)
+        # dim2 = dropout.get_shape()[1].value
+    #     weights = _variable_with_wight_decay('weights',shape=[dim2,LOCAL_3],stddev=0.04,wd = 0.00)
+    #     biases = _variable_on_cpu('biases',[LOCAL_3],tf.constant_initializer(0.1))
+    #     local3 = tf.nn.relu(tf.matmul(dropout,weights)+biases,name=scope.name)
+    #     _activation_summary(local3)
+    # # hidden layer 2
+    # with tf.variable_scope("local4") as scope:
+    #     weights = _variable_with_wight_decay('weights',shape=[LOCAL_3,LOCAL_4],stddev=0.04,wd=0.001)
+    #     biases = _variable_on_cpu('biases',shape=[LOCAL_4],initializer=tf.constant_initializer(0.1))
+    #     local4 = tf.nn.relu(tf.matmul(local3,weights)+biases,name = scope.name)
+    #     _activation_summary(local4)
     #softmax生成层，按照参考的说法，tensorflow本身的交叉熵函数可以接受"not scaled"的数据，为了提高效率
     #softmax 对于原数据进行了线性变化
 
     with tf.variable_scope('softmax_linear') as scope:
-        weights = _variable_with_wight_decay('weights',shape=[LOCAL_4,CLASS_NUM],stddev= 1/192.0,wd=0.001)
+        dim = dropout.get_shape()
+        weights = _variable_with_wight_decay('weights',shape=[dim[1], CLASS_NUM],stddev= 1/192.0,wd=0.002)
         biases = _variable_on_cpu('biases',shape=[CLASS_NUM],initializer=tf.constant_initializer(0.0))
-        softmax_linear = tf.add(tf.matmul(local4,weights),biases,name='softmax')
+        softmax_linear = tf.add(tf.matmul(dropout,weights),biases,name='softmax')
 
     return  softmax_linear
 def loss(logits,label):
@@ -202,7 +206,7 @@ def train(totalloss,global_step):
     loss_average = _add_loss_summaries(total_loss=totalloss)
     lr = tf.train.exponential_decay(LEARNING_RATE, global_step, DECAY_STEP, LEARNING_RATE_DECAY_FACTOR)
     with tf.control_dependencies([loss_average]):
-        opt = tf.train.GradientDescentOptimizer(lr)
+        opt = tf.train.AdamOptimizer(lr)
         grads = opt.compute_gradients(totalloss)
 
     apply = opt.apply_gradients(grads_and_vars=grads,global_step=global_step)

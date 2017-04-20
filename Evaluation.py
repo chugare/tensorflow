@@ -74,8 +74,8 @@ def batch_evaluate():
 
 def single_evaluate():
     with tf.Graph().as_default() as g:
-        vecs_pl = tf.placeholder(tf.float32,[140,300])
-        vecs_batch = tf.reshape(vecs_pl,[1,140,300,1])
+        vecs_pl = tf.placeholder(tf.float32,[140,60])
+        vecs_batch = tf.reshape(vecs_pl,[1,140,60,1])
         #vecs_batch = tf.train.shuffle_batch([vecs],1,1000,10)
         prediction_res = Create.interface(vecs_batch)
 
@@ -98,8 +98,8 @@ def single_evaluate():
                 vecs_raw = fm.vecs_generte(sentence)
                 res_run = sess.run(prediction_res,feed_dict={vecs_pl:vecs_raw})
                 print(res_run)
-single_evaluate()
-batch_evaluate()
+# single_evaluate()
+# batch_evaluate()
 def main(args):
     if args == 's':
         single_evaluate()
