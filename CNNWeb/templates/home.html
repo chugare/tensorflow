@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>基于卷积神经网络的微博情感分析工具</title>
+
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="assets/materialize/css/materialize.min.css" media="screen,projection" />
+    <!-- Bootstrap Styles-->
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <!-- FontAwesome Styles-->
+    <link href="assets/css/font-awesome.css" rel="stylesheet" />
+    <!-- Morris Chart Styles-->
+    <link href="assets/js/morris/morris-0.4.3.min.css" rel="stylesheet" />
+    <!-- Custom Styles-->
+    <link href="assets/css/custom-styles.css" rel="stylesheet" />
+    <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="assets/js/Lightweight-Chart/cssCharts.css">
+
+</head>
+<body>
+
+<div id="wrapper">
+    <nav class="navbar navbar-default top-navbar" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand waves-effect waves-dark" href="index.html"><i class="large material-icons">insert_chart</i> <strong>TRACK</strong></a>
+
+		<div id="sideNav" href=""><i class="material-icons dp48">toc</i></div>
+            </div>
+    </nav>
+    <nav class="navbar-default navbar-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu">
+
+                    <li>
+                        <a id = 'run_state' href="/" class="waves-effect waves-dark"><i class="fa fa-dashboard"></i>运行状态</a>
+                    </li>
+                    <li>
+                        <a id = 'upload' href="/upload" class="waves-effect waves-dark"><i class="fa fa-arrow-circle-o-up"></i> 上传文件</a>
+                    </li>
+					<li>
+                        <a id = 'train'href="/train" class="waves-effect waves-dark"><i class="fa fa-coffee"></i> 训练模型 </a>
+                    </li>
+                    <li>
+                        <a id = 'eval' href="/eval" class="waves-effect waves-dark"><i class="fa fa-bar-chart-o"></i> 评价模型 </a>
+                    </li>
+                    <li>
+                        <a href="#" class="waves-effect waves-dark"><i class="fa fa-sitemap"></i> 快速浏览<span class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level">
+                            <li>
+                                <a href="#" class="waves-effect waves-dark">Second Level Link</a>
+                            </li>
+                            <li>
+                                <a href="#" class="waves-effect waves-dark">Second Level Link</a>
+                            </li>
+                            <li>
+                                <a href="#" class="waves-effect waves-dark">Second Level Link<span class="fa arrow"></span></a>
+                                <ul class="nav nav-third-level">
+                                    <li>
+                                        <a href="#">Third Level Link</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">Third Level Link</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">Third Level Link</a>
+                                    </li>
+
+                                </ul>
+
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+
+            </div>
+
+        </nav>
+<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle">Action <span class="caret"></span></button>
+<div id="page-wrapper">
+    <div class="header">
+       <h1  class="page-header"></h1>
+			<ol class="breadcrumb">
+              <li><a href="">Home</a></li>
+              <li><a id="pageheader" href="train">train</a></li>
+			</ol>
+    </div>
+    <div id="page-inner">
+    <form class="col s12" >
+      <div class="row">
+        <div class="input-field col s4">
+          <input  id="project_name" type="text" class="validate">
+          <label for="project_name" >实验名称</label>
+        </div>
+        <div class="input-field col s4">
+          <input id="num_of_kernel" type="text" value="50" class="validate valid">
+          <label for="num_of_kernel" class="active">卷积核数量</label>
+        </div>
+          <div class="input-field col s4">
+          <input id="kernel_size" type="text" value="5" class="validate valid">
+          <label for="kernel_size" class="active">卷积核大小</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s4">
+          <input  id="local1" type="text" value="300" class="validate valid">
+          <label for="local1" class="active">隐藏层1的参数宽度</label>
+        </div>
+        <div class="input-field col s4">
+          <input id="local2" type="text" value="100" class="validate valid">
+          <label for="local2" class="active">隐藏层2的参数宽度</label>
+        </div>
+          <div class="input-field col s4">
+          <input id="learning_rate" type="text" value="0.001" class="validate valid">
+          <label for="learning_rate" class="active">学习率</label>
+        </div>
+      </div>
+        <div class="row">
+        <div class="input-field col s4">
+          <input  id="max_step" type="text" value="10000" class="validate valid">
+          <label for="max_step" class="active">最大训练次数</label>
+        </div>
+        <div class="input-field col s4">
+          <input id="batch_size" type="text" value="128" class="validate valid">
+          <label for="batch_size" class="active">样本数量(每批)</label>
+        </div>
+          <div class="input-field col s4">
+          <input id="ema" type="text" value="0.001" class="validate valid">
+          <label for="ema" class="active">指数下降参数</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 col-sm-6">
+            <div class="card">
+                <div class="card-action">
+                    选择所要使用的训练集
+                </div>
+                <div class="card-content">
+                     <ul id ='data_sets' class="collapsible" data-collapsible="accordion">
+                     </ul>
+                </div>
+            </div>
+        </div>
+      </div>
+        <input type="button" class="" id="submit" value="提交">
+    </form>
+    </div>
+</div>
+</div>
+    <script src="assets/js/jquery-1.10.2.js"></script>
+    <script >
+        $(document).ready(function (){
+            var thispage = '{{ pagename }}'
+            var originclass = $("a#"+thispage).attr('class')
+            $("a#"+thispage).attr('class','active-menu '+originclass)
+            console.log(originclass)
+        })
+        function isEmpty(s) {
+            if(s=='')
+                return true
+            else
+                return false
+        }
+        var dataset_num = 3
+        DS = $.ajax({
+            url:'/dataset/',
+            success:function (data) {
+                html = ''
+                dataset_num = data.length
+                for (var i = 0;i<data.length;i++){
+                    console.log(data[i])
+                    app_html = "<li> <div class=\"collapsible-header\"><i class=\"material-icons\">filter_drama</i>" +data[i].name+
+                            " <p> <input name=\"dataset\" type=\"radio\" id=\"dataset-" +i+"\" value=\"" +i+"\""+
+                            "\" /> <label for=\"dataset-"+i+"\">" +data[i].name+
+                            "</label> </p> </div> <div class=\"collapsible-body\"><p>" +data[i].intro+
+                            "</p></div> </li>"
+                    html+=app_html
+                }
+               $('ul#data_sets').html(html)
+
+            }
+        })
+        $("input#submit").click(function () {
+            var project_name = $("input#project_name").val()
+            var num_of_kernel = $("input#num_of_kernel").val()
+            var kernel_size = $("input#kernel_size").val()
+            var local_1 = $("input#local1").val()
+            var local_2 =$("input#local2").val()
+            var learning_rate = $("input#learning_rate").val()
+            var batch_size = $("input#batch_size").val()
+            var ema = $("input#ema").val()
+            var max_step = $("input#max_step").val()
+            var dataset = -1
+            var list = $("input:radio[name='dataset']:checked").val()
+
+            if (!list){
+                alert("未选定数据集")
+            }
+            else if(isEmpty(project_name)||isEmpty(kernel_size)||isEmpty(local_1)||isEmpty(local_2)||isEmpty(learning_rate)||isEmpty(batch_size)||isEmpty(ema)||isEmpty(max_step))
+            {
+                alert('有数据为空')
+            }
+            else if(isNaN(num_of_kernel)||isNaN(kernel_size)||isNaN(local_1)||isNaN(local_2)||isNaN(learning_rate)||isNaN(batch_size)||isNaN(ema)||isNaN(max_step)){
+                alert('有非法数据')
+            }
+            else {
+                var data = {
+                    'name': project_name,
+                    'num_of_kernel': num_of_kernel,
+                    'kernel_size': kernel_size,
+                    'local1': local_1,
+                    'local2': local_2,
+                    'max_step': max_step,
+                    'learning_rate': learning_rate,
+                    'batch_size': batch_size,
+                    'ema': ema,
+                    'dataset': list
+
+                }
+                $.post('/train/', data, function (data, status) {
+                    alert('data:' + data + '  status:' + status)
+                })
+            }
+        })
+        function hello () {
+            console.log('hello')
+        }
+        hello()
+    </script>
+	<!-- Bootstrap Js -->
+    <script src="assets/js/bootstrap.min.js"></script>
+
+	<script src="assets/materialize/js/materialize.min.js"></script>
+
+    <!-- Metis Menu Js -->
+    <script src="assets/js/jquery.metisMenu.js"></script>
+    <!-- Morris Chart Js -->
+    <script src="assets/js/morris/raphael-2.1.0.min.js"></script>
+    <script src="assets/js/morris/morris.js"></script>
+
+
+	<script src="assets/js/easypiechart.js"></script>
+	<script src="assets/js/easypiechart-data.js"></script>
+
+	 <script src="assets/js/Lightweight-Chart/jquery.chart.js"></script>
+
+    <!-- Custom Js -->
+    <script src="assets/js/custom-scripts.js"></script>
+</body>
+</html>

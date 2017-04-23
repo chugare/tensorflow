@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>基于卷积神经网络的微博情感分析工具</title>
+
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="/assets/materialize/css/materialize.min.css" media="screen,projection" />
+    <!-- Bootstrap Styles-->
+    <link href="/assets/css/bootstrap.css" rel="stylesheet" />
+    <!-- FontAwesome Styles-->
+    <link href="/assets/css/font-awesome.css" rel="stylesheet" />
+    <!-- Morris Chart Styles-->
+    <link href="/assets/js/morris/morris-0.4.3.min.css" rel="stylesheet" />
+    <!-- Custom Styles-->
+    <link href="/assets/css/custom-styles.css" rel="stylesheet" />
+    <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="/assets/js/Lightweight-Chart/cssCharts.css">
+
+</head>
+<body>
+<div id="wrapper">
+    <nav class="navbar navbar-default top-navbar" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand waves-effect waves-dark" href="index.html"><i class="large material-icons">insert_chart</i> <strong>TRACK</strong></a>
+
+		<div id="sideNav" href=""><i class="material-icons dp48">toc</i></div>
+            </div>
+    </nav>
+    <nav class="navbar-default navbar-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu">
+
+                    <li>
+                        <a id="run_state" href="" class="waves-effect waves-dark"><i class="fa fa-dashboard"></i>运行状态</a>
+                    </li>
+                    <li>
+                        <a id='upload_file' href="upload" class="waves-effect waves-dark"><i class="fa fa-arrow-circle-o-up"></i> 上传文件</a>
+                    </li>
+					<li>
+                        <a id = 'train_model' href="train" class="waves-effect waves-dark"><i class="fa fa-coffee"></i> 训练模型 </a>
+                    </li>
+                    <li>
+                        <a id = 'eval_model' href="eval" class="waves-effect waves-dark"><i class="fa fa-bar-chart-o"></i> 评价模型 </a>
+                    </li>
+                    <li>
+                        <a href="#" class="waves-effect waves-dark"><i class="fa fa-sitemap"></i> 快速浏览<span class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level">
+                            <li>
+                                <a href="#" class="waves-effect waves-dark">Second Level Link</a>
+                            </li>
+                            <li>
+                                <a href="#" class="waves-effect waves-dark">Second Level Link</a>
+                            </li>
+                            <li>
+                                <a href="#" class="waves-effect waves-dark">Second Level Link<span class="fa arrow"></span></a>
+                                <ul class="nav nav-third-level">
+                                    <li>
+                                        <a href="#">Third Level Link</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">Third Level Link</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">Third Level Link</a>
+                                    </li>
+
+                                </ul>
+
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+
+            </div>
+
+        </nav>
+<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle">Action <span class="caret"></span></button>
+<div id="page-wrapper">
+    <div class="header">
+       <h1  class="page-header"></h1>
+			<ol class="breadcrumb">
+              <li><a href="">Home</a></li>
+              <li><a id="pageheader" href="train">train</a></li>
+			</ol>
+    </div>
+    <div id="page-inner">
+    <form class="col s12">
+      <div class="row">
+        <div class="input-field col s4">
+          <input  id="project_name" type="text" class="validate">
+          <label for="project_name">实验名称</label>
+        </div>
+        <div class="input-field col s4">
+          <input id="num_of_kernel" type="text" class="validate">
+          <label for="num_of_kernel">卷积核数量</label>
+        </div>
+          <div class="input-field col s4">
+          <input id="kernel_size" type="text" class="validate">
+          <label for="kernel_size">卷积核大小</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s4">
+          <input  id="local1" type="text" class="validate">
+          <label for="local1">隐藏层1的参数宽度</label>
+        </div>
+        <div class="input-field col s4">
+          <input id="local2" type="text" class="validate">
+          <label for="local2">隐藏层2的参数宽度</label>
+        </div>
+          <div class="input-field col s4">
+          <input id="data_vec" type="text" class="validate">
+          <label for="data_vec">数据维度</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 col-sm-6">
+            <div class="card">
+                <div class="card-action">
+                    选择所要使用的训练集
+                </div>
+                <div class="card-content">
+                     <ul id ='data_sets' class="collapsible" data-collapsible="accordion">
+                     </ul>
+                </div>
+            </div>
+        </div>
+      </div>
+        <input type="submit" class="">
+    </form>
+    </div>
+</div>
+</div>
+    <script src="/assets/js/jquery-1.10.2.js"></script>
+	<script type="javascript">
+        $(document).ready(function (){
+            var thispage = {{ pagename }}
+            var originclass = $("a#thispage").attr('class')
+            $("a#thispage").attr('class','active-menu '+originclass)
+            console.log(originclass)
+        })
+
+    </script>
+	<!-- Bootstrap Js -->
+    <script src="/assets/js/bootstrap.min.js"></script>
+
+	<script src="/assets/materialize/js/materialize.min.js"></script>
+
+    <!-- Metis Menu Js -->
+    <script src="/assets/js/jquery.metisMenu.js"></script>
+    <!-- Morris Chart Js -->
+    <script src="/assets/js/morris/raphael-2.1.0.min.js"></script>
+    <script src="/assets/js/morris/morris.js"></script>
+
+
+	<script src="/assets/js/easypiechart.js"></script>
+	<script src="/assets/js/easypiechart-data.js"></script>
+
+	 <script src="/assets/js/Lightweight-Chart/jquery.chart.js"></script>
+
+    <!-- Custom Js -->
+    <script src="/assets/js/custom-scripts.js"></script>
+</body>
+</html>

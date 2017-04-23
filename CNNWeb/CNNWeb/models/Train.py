@@ -1,11 +1,12 @@
-import tensorflow as tf
-import Create
-import FileManager
 import json
 import time
-import numpy as np
-import sys
 from datetime import datetime
+
+import Create
+import tensorflow as tf
+
+from CNNWeb.CNNWeb.models import FileManager
+
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', './tmp/train', """
 event logs + checkpoints

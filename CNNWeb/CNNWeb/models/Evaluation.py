@@ -1,8 +1,10 @@
 import json
-import FileManager as FM
-import Create
 import math
+
+from . import Create
 import numpy
+
+from CNNWeb.CNNWeb.models import FileManager as FM
 
 tf = FM.tf
 SETTINGS = json.load(open('settings.json', 'r'))
@@ -56,7 +58,7 @@ def eval_once(saver, summary_op, top_k_op, summary_writer):
         coord.join(thread, 10)
 
 
-def batch_evaluate():
+def batch_evaluate(filename):
     with tf.Graph().as_default() as g:
         fm = FM.FileManager()
         vecs, label = fm.read_and_decode([Record_path + FILE])
