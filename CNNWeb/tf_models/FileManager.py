@@ -18,7 +18,7 @@ class FileManager:
     VEC_SIZE = 60
     def __init__(self):
         settings = json.load(open('settings.json','r'))
-        self.Base_Path = settings['BasePath']
+        self.Base_Path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/data/'
 
         self.txtpath = self.Base_Path+settings['TxtPath']
         self.recordpath = self.Base_Path+settings['RecordPath']
@@ -33,14 +33,13 @@ class FileManager:
             self.dic = Word2Vec.load(self.DIC_path)
         except IOError as i:
             print('Word Vector not found')
-    def generate_TFRecord_file(self,filename,word_seg):
+    def generate_TFRecord_file(self,filename,word_seg,record_name):
         try:
             os.chdir(self.recordpath)
         except Exception:
             os.mkdir(self.recordpath)
             os.chdir(self.recordpath)
-        writer = tf.python_io.TFRecordWriter(self.recordpath+'train.tfrecords')
-        w2 = tf.python_io.TFRecordWriter(self.recordpath+'eval.tfrecords')
+        writer = tf.python_io.TFRecordWriter(self.recordpath+record_name+'.tfrecords')
         count = 0
         for file in filename:
             try:
@@ -93,12 +92,9 @@ class FileManager:
                     "label" : tf.train.Feature(int64_list = tf.train.Int64List(value = [int(label)])),
                     "vecs"  : tf.train.Feature(float_list = tf.train.FloatList(value=vecs))
                 }))
-                if count<self.NUM_FOR_TRAIN:
-                    writer.write(example.SerializeToString())
-                    count += 1
-                else:
-                    w2.write(example.SerializeToString())
-                    count += 1
+                writer.write(example.SerializeToString())
+                count += 1
+
         writer.close()
     def read_and_decode(self,filename):
         fq = tf.train.string_input_producer(filename)

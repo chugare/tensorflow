@@ -225,6 +225,7 @@
                 }
                 $.post('/train/', data, function (data, status) {
                     alert('data:' + data + '  status:' + status)
+                    window.location.href= '/'
                 })
             }
         })

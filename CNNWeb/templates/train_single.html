@@ -254,6 +254,18 @@
                 })
             }
         })
+        $("input#run_training").click(function () {
+            $.ajax({
+                url:'/run_train/',
+                data:{'id':id},
+                type:'POST',
+                success:function (data) {
+                    if (data=='success')
+                        window.location.href = '/'
+
+                }
+            })
+        })
 
     </script>
 

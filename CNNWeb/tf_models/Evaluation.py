@@ -1,10 +1,10 @@
 import json
 import math
 
-from . import Create
 import numpy
 
-from CNNWeb.CNNWeb.tf_models import FileManager as FM
+from CNNWeb.tf_models import FileManager as FM
+from . import Create
 
 tf = FM.tf
 SETTINGS = json.load(open('settings.json', 'r'))

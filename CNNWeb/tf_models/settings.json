@@ -3,6 +3,6 @@
   "BasePath-o":"/home/zsm/Desktop/zhaosimeng/tensorflow/data/",
   "DataFile":"train.tfrecords",
   "EvaluateFile":"eval.tfrecords",
-  "TxtPath":"labeled/np/",
+  "TxtPath":"labeled/",
   "RecordPath":"records/"
 }

@@ -155,5 +155,9 @@ def trainset(request,id):
         t_ins['batch_size'] = query_ts.batch_size
         t_ins['max_step'] = query_ts.max_step
         t_ins['data_time'] = str(query_ts.date_time).split('.')[0]
-        print(t_ins)
         return HttpResponse(json.dumps(t_ins), content_type='application/json')
+
+def run_train(request):
+    if request.method=='POST':
+        data = request.POST
+        ts = models.TrainProject(id = data['id'])

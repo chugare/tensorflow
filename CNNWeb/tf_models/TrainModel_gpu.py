@@ -5,7 +5,7 @@ from datetime import datetime
 import CreateModel_gpu as CreateModel
 import tensorflow as tf
 
-from CNNWeb.CNNWeb.tf_models import FileManager
+from CNNWeb.tf_models import FileManager
 
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', './tmp/train', """
