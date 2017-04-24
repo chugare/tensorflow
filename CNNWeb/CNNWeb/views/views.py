@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render,render_to_response
 from django import forms
-
+from .. import models
 import json
 class uploadFile(forms.Form):
     fileupload = forms.FileField()
@@ -12,17 +12,6 @@ def home(request):
     return render(request=request,template_name='home.html',context={'pagename':'train'})
 
 
-class DataSet():
-    name = ''
-    intro = ''
-    def __init__(self,name,intro):
-        self.name = name
-        self.intro = intro
-    def generateHTML(self,id):
-        dataset_html = u"""
-
-        """
-        return dataset_html
 class TrainModelForm(forms.Form):
     name = forms.CharField()
     num_of_kernel = forms.IntegerField()
@@ -41,11 +30,16 @@ class TrainModelForm(forms.Form):
     data_set = forms.IntegerField()
 
 def train(request):
-    print(request.POST)
     if request.method == "POST":
         form = TrainModelForm(request.POST)
+        print form.is_valid()
+
         if form.is_valid():
             print(form.cleaned_data)
+            tp = models.TrainProject( form.cleaned_data)
+            tp.save()
+            print tp.id
+
     return HttpResponse('success')
 def upload(request):
 

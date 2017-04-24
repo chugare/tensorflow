@@ -215,13 +215,13 @@
                     'name': project_name,
                     'num_of_kernel': num_of_kernel,
                     'kernel_size': kernel_size,
-                    'local1': local_1,
-                    'local2': local_2,
+                    'local_1': local_1,
+                    'local_2': local_2,
                     'max_step': max_step,
                     'learning_rate': learning_rate,
                     'batch_size': batch_size,
                     'ema': ema,
-                    'dataset': list
+                    'data_set': list
 
                 }
                 $.post('/train/', data, function (data, status) {

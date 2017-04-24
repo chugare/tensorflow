@@ -4,7 +4,7 @@ import math
 from . import Create
 import numpy
 
-from CNNWeb.CNNWeb.models import FileManager as FM
+from CNNWeb.CNNWeb.tf_models import FileManager as FM
 
 tf = FM.tf
 SETTINGS = json.load(open('settings.json', 'r'))
