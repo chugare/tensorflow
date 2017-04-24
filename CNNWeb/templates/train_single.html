@@ -95,8 +95,8 @@
     <form class="col s12" >
       <div class="row">
         <div class="input-field col s4">
-          <input  id="project_name" type="text" class="validate">
-          <label for="project_name" >实验名称</label>
+          <input  id="project_name" type="text" class="validate valid">
+          <label for="project_name" class="active">实验名称</label>
         </div>
         <div class="input-field col s4">
           <input id="num_of_kernel" type="text" value="50" class="validate valid">
@@ -148,19 +148,26 @@
             </div>
         </div>
       </div>
-        <input type="button" class="" id="submit" value="提交">
+        <input type="button" class="btn" id="submit" style="padding-right: 40px;padding-left: 40px" value="保存">
+
+        <input type="button" class="btn" id="run_training" style="background-color: #db4437;padding-right: 40px;padding-left: 40px" value="训练">
     </form>
     </div>
 </div>
 </div>
     <script src="/assets/js/jquery-1.10.2.js"></script>
     <script >
+        var id = {{ train_id }}
+        var data_set = null
         $(document).ready(function (){
             var thispage = '{{ pagename }}'
+
             var originclass = $("a#"+thispage).attr('class')
             $("a#"+thispage).attr('class','active-menu '+originclass)
-            console.log(originclass)
+
+
         })
+
         function isEmpty(s) {
             if(s=='')
                 return true
@@ -174,15 +181,33 @@
                 html = ''
                 dataset_num = data.length
                 for (var i = 0;i<data.length;i++){
-                    console.log(data[i])
+                    console.log(data[i].name)
                     app_html = "<li> <div class=\"collapsible-header\"><i class=\"material-icons\">filter_drama</i>" +data[i].name+
-                            " <p> <input name=\"dataset\" type=\"radio\" id=\"dataset-" +i+"\" value=\"" +data[i].name+"\""+
-                            "\" /> <label for=\"dataset-"+i+"\">" +data[i].name+
+                            " <p> <input name=\"dataset\" type=\"radio\" id=\"" +data[i].name+"\" value=\"" +data[i].name+"\""+
+                            "\" /> <label for=\""+data[i].name+"\">" +data[i].name+
                             "</label> </p> </div> <div class=\"collapsible-body\"><p>" +data[i].source+
                             "</p></div> </li>"
                     html+=app_html
                 }
                $('ul#data_sets').html(html)
+
+            }
+        })
+        console.log(id)
+        TI = $.ajax({
+            url:'/trainset/'+id,
+            success:function (data) {
+                console.log(data)
+                $("input#project_name").val(data['name'])
+                $("input#num_of_kernel").val(data['num_of_kernel'])
+                $("input#kernel_size").val(data['kernel_size'])
+                $("input#local1").val(data['local_1'])
+                $("input#local2").val(data['local_2'])
+                $("input#learning_rate").val(data['learning_rate'])
+                $("input#batch_size").val(data['batch_size'])
+                $("input#ema").val(data['ema'])
+                $("input#max_step").val(data['max_step'])
+                data_set = data['data_set']
 
             }
         })
@@ -196,7 +221,7 @@
             var batch_size = $("input#batch_size").val()
             var ema = $("input#ema").val()
             var max_step = $("input#max_step").val()
-            var dataset = -1
+
             var list = $("input:radio[name='dataset']:checked").val()
 
             if (!list){
@@ -211,6 +236,7 @@
             }
             else {
                 var data = {
+                    'id':id,
                     'name': project_name,
                     'num_of_kernel': num_of_kernel,
                     'kernel_size': kernel_size,

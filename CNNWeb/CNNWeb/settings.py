@@ -25,7 +25,10 @@ SECRET_KEY = 'hzmog0prc5&_+4)kkaot-1g^j9=ht8=rg3kg5%1!@ik!bfc(_h'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '192.168.1.100',
+    '127.0.0.1'
+]
 
 
 # Application definition
@@ -33,11 +36,10 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'CNNWeb',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.messages',
-
-    'CNNWeb'
+    'django.contrib.messages'
 ]
 
 MIDDLEWARE = [
