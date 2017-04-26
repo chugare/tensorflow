@@ -5,9 +5,7 @@ import os
 import tensorflow as tf
 
 from CNNWeb.tf_models import FileManager, Create
-
 class Train():
-
     flist_str = ''
     BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/data/'
     Record_Path = ''
@@ -18,17 +16,17 @@ class Train():
     MAX_STEPS = 0
     LOG_FREQUENCY = 10
     settings = None
-    def __init__(self,**args):
-        self.settings = args
+    def __init__(self,model):
+        self.model = model
         with open('settings.json', 'r') as setting:
             data = json.load(setting)
-        date = str(args['date_time']).split('.')[0]
-        self.TRAIN_DIR += args['name']+data
-        self.flist_str = args['data_set']
+        date = str(model.date_time).split('.')[0]
+        self.TRAIN_DIR += model.name+date
+        self.flist_str = model.data_set
         self.Record_Path = self.BASE_PATH + data['RecordPath']
         self.LOCAL_FILE_LIST = str(self.flist_str).split(',')
-        self.BATCH_SIZE = args['batch_size']
-        self.MAX_STEPS = args['max_step']
+        self.BATCH_SIZE = model.batch_size
+        self.MAX_STEPS = model.max_step
         for l in self.LOCAL_FILE_LIST:
             s = self.Record_Path+l
             self.FILE_LIST.append(s)
@@ -40,6 +38,7 @@ class Train():
             global_step = tf.contrib.framework.get_or_create_global_step()
             fm = FileManager.FileManager()
             interface = Create.Interface()
+            interface.custom_args(self.model)
             try:
                 logit ,label = fm.read_and_decode(self.FILE_LIST)
                 logits_batch , labels_batch = interface.input(logit, label)
@@ -134,8 +133,8 @@ class Train():
 
                 while not mon_sess.should_stop():
                     mon_sess.run(train_op)
-def run(**argv):
-    train = Train(argv)
+def run(model):
+    train = Train(model)
     if tf.gfile.Exists(train.TRAIN_DIR):
         tf.gfile.DeleteRecursively(train.TRAIN_DIR)
     tf.gfile.MakeDirs(train.TRAIN_DIR)

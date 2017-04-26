@@ -48,6 +48,8 @@ class FileManager:
                 print(i)
                 print('file \''+file+'\' not found')
                 continue
+            except TypeError :
+                fopen = open(self.txtpath+file,'r')
             print ('analysis '+file+':')
             labels = []
             index = 0
@@ -132,7 +134,7 @@ class Weibo_handler(xml.sax.ContentHandler):
     Currenttype = ''
     label = 1
     emontion = ''
-    txtfile = open('weibo.txt','w',encoding='utf-8')
+    txtfile = open('weibo.txt','w')
     content = ''
     emotionlist = []
     positive = ['高兴','喜好','惊讶']
@@ -170,7 +172,7 @@ def main():
     fm = FileManager()
     filename = os.listdir(fm.txtpath)
 
-    fm.generate_TFRecord_file(filename,True)
+    fm.generate_TFRecord_file(filename,True,'cb')
 def readXML():
     fm = FileManager()
     xmlh = Weibo_handler()

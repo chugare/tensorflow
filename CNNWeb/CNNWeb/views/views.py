@@ -1,7 +1,11 @@
+# coding:utf-8
 from django.http import HttpResponse
 from django.shortcuts import render,render_to_response
 from django import forms
 from .. import models
+import  sys
+
+from CNNWeb.tf_models import Train
 import json
 from django.utils.timezone import now
 class uploadFile(forms.Form):
@@ -66,7 +70,10 @@ def upload(request):
             for chunk in request.FILES['fileupload'].chunks():
                 tmp.write(chunk)
             tmp.close()
-            tmp = open('tmp.txt','r',encoding='utf-8')
+            try:
+                tmp = open('tmp.txt','r',encoding='utf-8')
+            except TypeError:
+                tmp = open('tmp.txt', 'r')
             n = 0
             p = 0
             for line in tmp:
@@ -160,4 +167,5 @@ def trainset(request,id):
 def run_train(request):
     if request.method=='POST':
         data = request.POST
-        ts = models.TrainProject(id = data['id'])
+        ts = models.TrainProject.object.get(id = data['id'])
+        Train.run(ts)

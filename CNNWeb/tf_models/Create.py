@@ -1,3 +1,4 @@
+# coding:utf-8
 import tensorflow as tf
 class Interface( ):
     VEC_SIZE = 60
@@ -19,14 +20,14 @@ class Interface( ):
     MOVING_AVERAGE_DECAY= 0.99
     FLAGS = tf.app.flags.FLAGS
 
-    def custom_args(self,**dict):
-        self.VEC_SIZE = dict['vec_size']
-        self.CONV_OUT = dict['num_of_kernel']
-        self.BATCH_SIZE = dict['batch_size']
-        self.LOCAL_3 = dict['local_1']
-        self.LOCAL_4 = dict['local_2']
-        self.LEARNING_RATE = dict['learning_rate']
-        self.MOVING_AVERAGE_DECAY = dict['ema']
+    def custom_args(self,model):
+        self.VEC_SIZE = 60
+        self.CONV_OUT = model.num_of_kernel
+        self.BATCH_SIZE = model.batch_size
+        self.LOCAL_3 = model.local_1
+        self.LOCAL_4 = model.local_2
+        self.LEARNING_RATE = model.learning_rate
+        self.MOVING_AVERAGE_DECAY = model.ema
         tf.app.flags.DEFINE_integer('batch_size', self.BATCH_SIZE,
                                     """Number of images to process in a batch.""")
 
