@@ -151,6 +151,7 @@
         <input type="button" class="btn" id="submit" style="padding-right: 40px;padding-left: 40px" value="保存">
 
         <input type="button" class="btn" id="run_training" style="background-color: #db4437;padding-right: 40px;padding-left: 40px" value="训练">
+        <input type="button" class="btn" id="run_eval" style="background-color: #224437;padding-right: 40px;padding-left: 40px" value="验证">
     </form>
     </div>
 </div>
@@ -261,12 +262,27 @@
                 type:'POST',
                 success:function (data) {
                     if (data=='success')
-                        window.location.href = '/'
+                        alert('success')
+
+                        window.location.href = '/train_state/'+id
 
                 }
             })
         })
+        $("input#run_eval").click(function () {
+            $.ajax({
+                url:'/run_train/',
+                data:{'id':id},
+                type:'POST',
+                success:function (data) {
+                    if (data=='success')
+                        alert('success')
 
+                        window.location.href = '/train_state/'+id
+
+                }
+            })
+        })
     </script>
 
 	<!-- Bootstrap Js -->

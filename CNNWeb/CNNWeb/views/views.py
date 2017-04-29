@@ -1,13 +1,16 @@
 # coding:utf-8
-from django.http import HttpResponse
-from django.shortcuts import render,render_to_response
-from django import forms
-from .. import models
-import  sys
-
-from CNNWeb.tf_models import Train
 import json
+import threading
+import time
+from django import forms
+from django.http import HttpResponse
+from django.shortcuts import render
 from django.utils.timezone import now
+from .. import models
+from tf_models import Train
+
+threadlist = {}
+
 class uploadFile(forms.Form):
     fileupload = forms.FileField()
     name = forms.CharField(max_length=20)
@@ -42,7 +45,7 @@ def train(request,id):
 
     #给定id了，说明是查看相应的train项目
 
-        return  render(request = request,template_name='train_single.html',context={'pagename':'train_single','train_id': id})
+        return  render(request = request,template_name='train_single.html',context={'pagename':'train','train_id': id})
 
     if request.method == "GET":
         return render(request,'train.html',{'pagename':'train'})
@@ -82,10 +85,13 @@ def upload(request):
                     continue
                 elif line[0]=='0':
                     p+=1
+            print n+p
             instance = models.Dataset(file = request.FILES['fileupload'],name = request.POST['name'],source=request.POST['source'],size = n+p,np = n/p,date_time=now())
             instance.save()
             return HttpResponse('success')
-    return render(request = request,template_name='upload.html',context={'pagename':'upload'})
+
+        return HttpResponse('failed')
+    return render(request = request,template_name='upload.html',context={'pagename':'upload_file'})
 def eval_single(request):
     pass
 def eval_batch(request):
@@ -117,6 +123,7 @@ def dataset(request):
     query_set_ds = models.Dataset.objects.all()
     for q in query_set_ds:
         ds = {}
+        print q.file
         ds['name'] = str(q.file).split('/')[-1]
         ds['size'] = q.size
         ds['date_time'] = str(q.date_time).split('.')[0]
@@ -164,8 +171,54 @@ def trainset(request,id):
         t_ins['data_time'] = str(query_ts.date_time).split('.')[0]
         return HttpResponse(json.dumps(t_ins), content_type='application/json')
 
+class train_thread(threading.Thread):
+    state = 'file_t'
+    progress = 0
+    message = ''
+    file_size = 1
+    max_step= 1
+    def change_state(self,state,step,message):
+        self.state = state
+        self.message = message
+        if state == 'file_t':
+            self.progress= step*100.0/self.file_size
+        elif state == 'train':
+            self.progress= step*100.0/self.max_step
+        print self.progress
+
+    def __init__(self,model):
+        threading.Thread.__init__(self)
+        self.model = model
+        file_name = model.data_set
+        file_name = 'data/labeled/'+file_name
+        DS = models.Dataset.objects.get(file = file_name)
+        self.file_size = DS.size
+        self.max_step = model.max_step
+    def run(self):
+        Train.run(self.model,self)
+        q_t_p = models.TrainProject.objects.filter(id=self.model.id)
+        q_t_p.update(train_state = 'finished')
+
+
 def run_train(request):
     if request.method=='POST':
         data = request.POST
-        ts = models.TrainProject.object.get(id = data['id'])
-        Train.run(ts)
+        id = data['id']
+        ts = models.TrainProject.objects.filter(id = id)
+
+        ts_m = models.TrainProject.objects.get(id = data['id'])
+        t_thread = train_thread(ts_m)
+        threadlist[id] = t_thread
+        t_thread.start()
+        ts.update(train_state= 'running')
+        return HttpResponse('success')
+def train_state(request,id):
+    if request.method != 'POST':
+        return render(request, template_name='train_state.html', context={'pagename': 'train_state'})
+    else:
+        ts_thread = threadlist[id]
+        state = ts_thread.state
+        message= ts_thread.message
+        progress = ts_thread.progress
+        mes = {'state':state,'progress':progress,'message':message}
+        return HttpResponse(json.dumps(mes),'application/json')

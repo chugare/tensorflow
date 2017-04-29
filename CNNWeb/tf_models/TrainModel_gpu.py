@@ -2,9 +2,9 @@ import json
 import time
 from datetime import datetime
 
-import CreateModel_gpu as CreateModel
 import tensorflow as tf
 
+import CreateModel_gpu as CreateModel
 from CNNWeb.tf_models import FileManager
 
 FLAGS = tf.app.flags.FLAGS

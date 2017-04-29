@@ -1,11 +1,13 @@
 import json
+import os
 import time
 from datetime import datetime
-import os
-import tensorflow as tf
 
-from CNNWeb.tf_models import FileManager, Create
-class Train():
+import tensorflow as tf
+from . import Create, FileManager
+
+
+class Train_pro():
     flist_str = ''
     BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/data/'
     Record_Path = ''
@@ -16,27 +18,33 @@ class Train():
     MAX_STEPS = 0
     LOG_FREQUENCY = 10
     settings = None
-    def __init__(self,model):
+    run_thread = None
+    def __init__(self,model,thread):
         self.model = model
+        self.run_thread = thread
         with open('settings.json', 'r') as setting:
             data = json.load(setting)
         date = str(model.date_time).split('.')[0]
-        self.TRAIN_DIR += model.name+date
-        self.flist_str = model.data_set
+        self.TRAIN_DIR += str(self.model.id)+'/'
+        self.flist_str = model.id
         self.Record_Path = self.BASE_PATH + data['RecordPath']
         self.LOCAL_FILE_LIST = str(self.flist_str).split(',')
         self.BATCH_SIZE = model.batch_size
         self.MAX_STEPS = model.max_step
         for l in self.LOCAL_FILE_LIST:
-            s = self.Record_Path+l
+            s = self.Record_Path+l+'.tfrecords'
             self.FILE_LIST.append(s)
+
+        if tf.gfile.Exists(self.TRAIN_DIR):
+            tf.gfile.DeleteRecursively(self.TRAIN_DIR)
+        tf.gfile.MakeDirs(self.TRAIN_DIR)
     def generate_record(self):
-        fm = FileManager.FileManager()
-        fm.generate_TFRecord_file()
+        fm = FileManager.FileManager(self.run_thread)
+        fm.generate_TFRecord_file([self.model.data_set],True,self.model.id)
     def train(self):
         with tf.Graph().as_default():
             global_step = tf.contrib.framework.get_or_create_global_step()
-            fm = FileManager.FileManager()
+            fm = FileManager.FileManager(thread=self.run_thread)
             interface = Create.Interface()
             interface.custom_args(self.model)
             try:
@@ -61,6 +69,7 @@ class Train():
             with tf.control_dependencies([ap,zn]):
             #print(tf.global_variables())
                 train_op = interface.train(totalloss=loss, global_step=global_step)
+            train_self = self
             class _loghooker(tf.train.SessionRunHook):
                 def begin(self):
 
@@ -72,21 +81,22 @@ class Train():
                     return tf.train.SessionRunArgs(loss)
                     pass
                 def after_run(self, run_context, run_values):
-                    if self._step%Train.LOG_FREQUENCY == 0:
+                    if self._step%train_self.LOG_FREQUENCY == 0:
                         current_time = time.time()
                         duration = current_time - self._start_time
                         self._start_time = current_time
                         loss_value = run_values.results
 
-                        example_per_second = Train.LOG_FREQUENCY * Train.BATCH_SIZE / duration
-                        sec_per_batch = float(duration/Train.LOG_FREQUENCY)
+                        example_per_second =train_self.LOG_FREQUENCY * train_self.BATCH_SIZE / duration
+                        sec_per_batch = float(duration/train_self.LOG_FREQUENCY)
+                        train_self.run_thread.change_state('training',self._step,'loss:'+str(loss_value))
                         format_str= ('%s : step %d,loss = %.2f(%.1f examples/sec;%.3f sec/batch)')
                         print(format_str % (datetime.now(), self._step,loss_value,example_per_second,sec_per_batch))
 
             class _loghooker_zeros(tf.train.SessionRunHook):
                 def begin(self):
                     self._step = -1
-                    self.all = 0
+                    self.all = 0.0
                     self._start_time = time.time()
                     pass
 
@@ -98,14 +108,15 @@ class Train():
                 def after_run(self, run_context, run_values):
                     zs = run_values.results
                     self.all += zs
-                    if self._step%Train.LOG_FREQUENCY==0:
-
-                        print('zeros:'+ str(self.all/Train.BATCH_SIZE/Train.LOG_FREQUENCY))
-                        self.all = 0
+                    if self._step%train_self.LOG_FREQUENCY==0:
+                        zero_f = float(self.all)/train_self.BATCH_SIZE/train_self.LOG_FREQUENCY
+                        train_self.run_thread.message+=' zero:'+str(zero_f)
+                        print('zeros:'+ str(zero_f))
+                        self.all = 0.0
 
             class _loghooker_pres(tf.train.SessionRunHook):
                 def begin(self):
-                    self._all_true = 0
+                    self._all_true = 0.0
                     self._step = -1
                     self._start_time = time.time()
                     pass
@@ -117,13 +128,14 @@ class Train():
                     true_num = run_values.results
                     self._all_true +=true_num
 
-                    if self._step%Train.LOG_FREQUENCY == 0:
-
-                        print(self._all_true/Train.LOG_FREQUENCY/Train.BATCH_SIZE)
+                    if self._step%train_self.LOG_FREQUENCY == 0:
+                        pre_f =  float(self._all_true) / train_self.BATCH_SIZE / train_self.LOG_FREQUENCY
+                        train_self.run_thread.message += ' precision:' + str(pre_f)
+                        print(pre_f)
                         self._all_true = 0
             with tf.train.MonitoredTrainingSession(
                 checkpoint_dir=self.TRAIN_DIR,
-                hooks=[tf.train.StopAtStepHook(last_step=Train.MAX_STEPS),
+                hooks=[tf.train.StopAtStepHook(last_step=train_self.MAX_STEPS),
                        tf.train.NanTensorHook(loss),
                        _loghooker(),
                        _loghooker_pres(),
@@ -133,11 +145,9 @@ class Train():
 
                 while not mon_sess.should_stop():
                     mon_sess.run(train_op)
-def run(model):
-    train = Train(model)
-    if tf.gfile.Exists(train.TRAIN_DIR):
-        tf.gfile.DeleteRecursively(train.TRAIN_DIR)
-    tf.gfile.MakeDirs(train.TRAIN_DIR)
+def run(model,thread):
+    train = Train_pro(model,thread)
+    train.generate_record()
     train.train()
 if __name__ == '__main__':
 

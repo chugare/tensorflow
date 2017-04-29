@@ -16,10 +16,11 @@ class FileManager:
     DIC_path = ''
     NUM_FOR_TRAIN = 4000
     VEC_SIZE = 60
-    def __init__(self):
+    run_thread = None
+    def __init__(self,thread):
         settings = json.load(open('settings.json','r'))
         self.Base_Path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/data/'
-
+        self.run_thread = thread
         self.txtpath = self.Base_Path+settings['TxtPath']
         self.recordpath = self.Base_Path+settings['RecordPath']
         self.DIC_path = self.Base_Path +'Word60.model'
@@ -39,7 +40,7 @@ class FileManager:
         except Exception:
             os.mkdir(self.recordpath)
             os.chdir(self.recordpath)
-        writer = tf.python_io.TFRecordWriter(self.recordpath+record_name+'.tfrecords')
+        writer = tf.python_io.TFRecordWriter(self.recordpath+str(record_name)+'.tfrecords')
         count = 0
         for file in filename:
             try:
@@ -57,7 +58,6 @@ class FileManager:
 
                 if word_seg :
                     words = jieba.lcut(str(line))
-                    print(words)
                 else:
                     words = line
 
@@ -75,7 +75,7 @@ class FileManager:
                 except IndexError:
                     continue
                 index += 1
-
+                self.run_thread.change_state('file_t',index,line)
                 sys.stdout.write('\r--->current word: '+str(index)+' ' +line)
 
                 for i in range(0,140):
@@ -83,8 +83,6 @@ class FileManager:
                     try:
                         vecs.extend(self.dic[word_alt[i]].tolist())
                     except KeyError :
-                        print(word_alt[i]+ " : not found")
-
                         vecs.extend(self.Unknown_Vec)
                         continue
                     except IndexError :

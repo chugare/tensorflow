@@ -1,4 +1,5 @@
 from  django.db import models
+import datetime
 from django.utils.timezone import now
 class Dataset(models.Model):
     def __unicode__(self):
@@ -27,6 +28,8 @@ class TrainProject(models.Model):
         self.max_step = dict['max_step']
         self.data_set = dict['data_set']
         self.train_state = 'ready'
+        # ready/runnning/finished/evaluating
+        self.date_time = now()+datetime.timedelta(hours=8)
     def __unicode__(self):
         return self.name
     name = models.CharField(max_length=100)

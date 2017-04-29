@@ -26,7 +26,7 @@ urlpatterns = [
     url('^dataset/', views.dataset, name='dataset'),
     url('^train/(\d)*', views.train, name='train'),
     url('^run_train/', views.run_train, name='run_train'),
-
+    url('^train_state/(\d)*',views.train_state , name = 'train_state'),
     url('^trainset/(\S)*', views.trainset, name='train_set'),
     url('^eval_single/', views.eval_single, name='eval_single'),
     url('^eval_batch/', views.eval_batch, name='eval_batch'),
