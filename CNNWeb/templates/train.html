@@ -29,7 +29,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand waves-effect waves-dark" href="index.html"><i class="large material-icons">insert_chart</i> <strong>TRACK</strong></a>
+                <a class="navbar-brand waves-effect waves-dark" href="../moban/index.html"><i class="large material-icons">insert_chart</i> <strong>TRACK</strong></a>
 
 		<div id="sideNav" href=""><i class="material-icons dp48">toc</i></div>
             </div>
@@ -136,7 +136,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-6 col-sm-12">
+        <div class="col-md-6 col-sm-6">
             <div class="card">
                 <div class="card-action">
                     选择所要使用的训练集
@@ -147,14 +147,29 @@
                 </div>
             </div>
         </div>
+          <div class="col-md-6 col-sm-6">
+            <div class="card">
+                <div class="card-action">
+                    选择所要使用的验证集
+                </div>
+                <div class="card-content">
+                     <ul id ='data_sets_eval' class="collapsible" data-collapsible="accordion">
+                     </ul>
+                </div>
+            </div>
+        </div>
       </div>
-        <input type="button" class="" id="submit" value="提交">
+        <input type="button" class="btn" id="submit" style="background-color: #30cc7b;padding-right: 40px;padding-left: 40px" value="提交">
+        <input type="button" class="btn" id="run_training" style="background-color: #db4437;padding-right: 40px;padding-left: 40px" value="训练">
+        <input type="button" class="btn" id="eval_batch" style="background-color: #2962FF;padding-right: 40px;padding-left: 40px" value="批量验证">
+        <input type="button" class="btn" id="eval_single" style="background-color: #2962FF;padding-right: 40px;padding-left: 40px" value="文本测试">
     </form>
     </div>
 </div>
 </div>
     <script src="/assets/js/jquery-1.10.2.js"></script>
     <script >
+        var id = '{{ train_id }}'
         $(document).ready(function (){
             var thispage = '{{ pagename }}'
             var originclass = $("a#"+thispage).attr('class')
@@ -172,6 +187,7 @@
             url:'/dataset/',
             success:function (data) {
                 html = ''
+                html_eval = ''
                 dataset_num = data.length
                 for (var i = 0;i<data.length;i++){
                     console.log(data[i])
@@ -180,13 +196,49 @@
                             "\" /> <label for=\"dataset-"+i+"\">" +data[i].name+
                             "</label> </p> </div> <div class=\"collapsible-body\"><p>" +data[i].source+
                             "</p></div> </li>"
+                    app_html_eval = "<li> <div class=\"collapsible-header\"><i class=\"material-icons\">filter_drama</i>" +data[i].name+
+                            " <p> <input name=\"dataset_eval\" type=\"radio\" id=\"dataset-eval-" +i+"\" value=\"" +data[i].name+"\""+
+                            "\" /> <label for=\"dataset-eval-"+i+"\">" +data[i].name+
+                            "</label> </p> </div> <div class=\"collapsible-body\"><p>" +data[i].source+
+                            "</p></div> </li>"
                     html+=app_html
+                    html_eval+=app_html_eval
                 }
-               $('ul#data_sets').html(html)
+                $('ul#data_sets').html(html)
+                $('ul#data_sets_eval').html(html_eval)
 
             }
         })
+        function get_default() {
+            $.ajax({
+            url:'/trainset/'+id,
+            success:function (data) {
+                console.log(data)
+                $("input#project_name").val(data['name'])
+                $("input#num_of_kernel").val(data['num_of_kernel'])
+                $("input#kernel_size").val(data['kernel_size'])
+                $("input#local1").val(data['local_1'])
+                $("input#local2").val(data['local_2'])
+                $("input#learning_rate").val(data['learning_rate'])
+                $("input#batch_size").val(data['batch_size'])
+                $("input#ema").val(data['ema'])
+                $("input#max_step").val(data['max_step'])
+                data_set = data['data_set']
+
+            }
+        })
+        }
+
+
+        if (id=='')
+        {
+
+        }else{
+         get_default()
+        }
+
         $("input#submit").click(function () {
+            console.log('saveing')
             var project_name = $("input#project_name").val()
             var num_of_kernel = $("input#num_of_kernel").val()
             var kernel_size = $("input#kernel_size").val()
@@ -198,8 +250,9 @@
             var max_step = $("input#max_step").val()
             var dataset = -1
             var list = $("input:radio[name='dataset']:checked").val()
+            var list_eval = $("input:radio[name='dataset-eval']:checked").val()
 
-            if (!list){
+            if (!list||(!list_eval)){
                 alert("未选定数据集")
             }
             else if(isEmpty(project_name)||isEmpty(kernel_size)||isEmpty(local_1)||isEmpty(local_2)||isEmpty(learning_rate)||isEmpty(batch_size)||isEmpty(ema)||isEmpty(max_step))
@@ -220,7 +273,8 @@
                     'learning_rate': learning_rate,
                     'batch_size': batch_size,
                     'ema': ema,
-                    'data_set': list
+                    'data_set': list,
+                    'data_set_eval':list_eval
 
                 }
                 $.post('/train/', data, function (data, status) {
@@ -229,7 +283,46 @@
                 })
             }
         })
+        $("input#run_training").click(function () {
+                    $.ajax({
+                        url:'/run_train/',
+                        data:{'id':id},
+                        type:'POST',
+                        success:function (data) {
+                            if (data=='success')
+                                alert('success')
 
+                                window.location.href = '/train_state/'+id
+
+                        }
+                    })
+                })
+        $("input#eval_batch").click(function () {
+            $.ajax({
+                url:'/eval_batch/',
+                data:{'id':id},
+                type:'POST',
+                success:function (data) {
+                    if (data=='success')
+                        alert('success')
+                        window.location.href = '/eval_state/'+id
+
+                }
+            })
+        })
+        $("input#eval_single").click(function () {
+            $.ajax({
+                url:'/run_single/',
+                data:{'id':id},
+                type:'POST',
+                success:function (data) {
+                    if (data=='success')
+                        alert('success')
+                        window.location.href = '/eval_state/'+id
+
+                }
+            })
+        })
     </script>
 
 	<!-- Bootstrap Js -->

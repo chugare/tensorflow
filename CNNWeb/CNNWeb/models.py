@@ -27,6 +27,7 @@ class TrainProject(models.Model):
         self.ema = dict['ema']
         self.max_step = dict['max_step']
         self.data_set = dict['data_set']
+        self.data_set_eval = dict['data_set_eval']
         self.train_state = 'ready'
         # ready/runnning/finished/evaluating
         self.date_time = now()+datetime.timedelta(hours=8)
@@ -42,5 +43,6 @@ class TrainProject(models.Model):
     ema = models.FloatField()
     max_step = models.IntegerField()
     data_set = models.CharField(default='1',max_length=40)
+    data_set_eval = models.CharField(default='1', max_length=40)
     train_state = models.CharField(max_length=10)
     date_time = models.DateTimeField(default=now())

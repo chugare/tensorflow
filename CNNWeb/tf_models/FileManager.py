@@ -97,7 +97,8 @@ class FileManager:
 
         writer.close()
     def read_and_decode(self,filename):
-        fq = tf.train.string_input_producer(filename)
+
+        fq = tf.train.string_input_producer([filename])
         reader = tf.TFRecordReader()
         _, serialized_example = reader.read(fq)
         example = tf.parse_single_example(serialized_example, features={

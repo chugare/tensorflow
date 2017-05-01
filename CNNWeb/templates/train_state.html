@@ -29,7 +29,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand waves-effect waves-dark" href="index.html"><i class="large material-icons">insert_chart</i> <strong>TRACK</strong></a>
+                <a class="navbar-brand waves-effect waves-dark" href="../moban/index.html"><i class="large material-icons">insert_chart</i> <strong>TRACK</strong></a>
 
 		<div id="sideNav" href=""><i class="material-icons dp48">toc</i></div>
             </div>
@@ -95,9 +95,11 @@
         <div class="col s12">
             <div class="row">
                 <div  class="card">
-                    <p id="progress_name"></p>
+                    <p id="progress_name">
+                        k
+                    </p>
                     <div  id="progress_message" class="card-action">
-
+                        k
                     </div>
                     <div class="card-content">
                        <div class="progress progress-striped active">
@@ -140,10 +142,13 @@
             success:function (data) {
                 state = data['state']
                 msg = data['message']
-                progress = data['progress']
+                progress = data['progress']*100
+                name = data['name']
                 console.log(state+' '+progress);
+
                 $('div#progress_bar').attr('style','width:'+progress+'%')
                 $('div#progress_message').html(msg)
+                $('p#progress_name').html(name+': '+state)
             }
 
         })

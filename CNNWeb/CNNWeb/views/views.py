@@ -7,10 +7,10 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.timezone import now
 from .. import models
-from tf_models import Train
+from tf_models import Train,Evaluation
 
 threadlist = {}
-
+eval_threads = {}
 class uploadFile(forms.Form):
     fileupload = forms.FileField()
     name = forms.CharField(max_length=20)
@@ -38,14 +38,14 @@ class TrainModelForm(forms.Form):
 
     max_step = forms.IntegerField()
     data_set = forms.CharField(max_length=40)
-
+    data_set_eval = forms.CharField(max_length = 40)
 def train(request,id):
     print(id)
     if id is not None:
 
     #给定id了，说明是查看相应的train项目
 
-        return  render(request = request,template_name='train_single.html',context={'pagename':'train','train_id': id})
+        return  render(request = request,template_name='train.html',context={'pagename':'train','train_id': id})
 
     if request.method == "GET":
         return render(request,'train.html',{'pagename':'train'})
@@ -85,7 +85,7 @@ def upload(request):
                     continue
                 elif line[0]=='0':
                     p+=1
-            print n+p
+
             instance = models.Dataset(file = request.FILES['fileupload'],name = request.POST['name'],source=request.POST['source'],size = n+p,np = n/p,date_time=now())
             instance.save()
             return HttpResponse('success')
@@ -93,37 +93,36 @@ def upload(request):
         return HttpResponse('failed')
     return render(request = request,template_name='upload.html',context={'pagename':'upload_file'})
 def eval_single(request):
-    pass
+    if request.method == 'POST':
+        data = request.POST
+        id = data['id']
+        ts = models.TrainProject.objects.filter(id=id)
+
+        ts_m = models.TrainProject.objects.get(id=data['id'])
+        e_thread = eval_thread(ts_m)
+        eval_thread[id] = e_thread
+        e_thread.start()
+        ts.update(train_state='evaluating')
+        return HttpResponse('success')
 def eval_batch(request):
-    pass
-def shortcut(request):
-    str = '''
-    <nav class="navbar navbar-default top-navbar" role="navigation">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand waves-effect waves-dark" href="index.html"><i class="large material-icons">insert_chart</i> <strong>TRACK</strong></a>
+    if request.method == 'POST':
+        data = request.POST
+        id = data['id']
+        ts = models.TrainProject.objects.filter(id=id)
 
-		<div id="sideNav" href=""><i class="material-icons dp48">toc</i></div>
-            </div>
+        ts_m = models.TrainProject.objects.get(id=data['id'])
+        e_thread = eval_thread(ts_m)
+        eval_threads[id] = e_thread
+        e_thread.start()
+        ts.update(train_state='evaluating')
+        return HttpResponse('success')
 
-            <ul class="nav navbar-top-links navbar-right">
-				<li><a class="dropdown-button waves-effect waves-dark" href="#!" data-activates="dropdown4"><i class="fa fa-envelope fa-fw"></i> <i class="material-icons right">arrow_drop_down</i></a></li>
-				<li><a class="dropdown-button waves-effect waves-dark" href="#!" data-activates="dropdown3"><i class="fa fa-tasks fa-fw"></i> <i class="material-icons right">arrow_drop_down</i></a></li>
-				<li><a class="dropdown-button waves-effect waves-dark" href="#!" data-activates="dropdown2"><i class="fa fa-bell fa-fw"></i> <i class="material-icons right">arrow_drop_down</i></a></li>
-				  <li><a class="dropdown-button waves-effect waves-dark" href="#!" data-activates="dropdown1"><i class="fa fa-user fa-fw"></i> <b>John Doe</b> <i class="material-icons right">arrow_drop_down</i></a></li>
-            </ul>
-        </nav>'''
 def dataset(request):
     datasets = []
     query_set_ds = models.Dataset.objects.all()
     for q in query_set_ds:
         ds = {}
-        print q.file
+
         ds['name'] = str(q.file).split('/')[-1]
         ds['size'] = q.size
         ds['date_time'] = str(q.date_time).split('.')[0]
@@ -154,7 +153,7 @@ def trainset(request,id):
         t_ins['name'] = query_ts.name
 
         t_ins['data_set'] = query_ts.data_set
-
+        t_ins['data_set_eval'] = query_ts.data_set_eval
         t_ins['num_of_kernel'] = query_ts.num_of_kernel
 
         t_ins['kernel_size'] = query_ts.kernel_size
@@ -177,18 +176,20 @@ class train_thread(threading.Thread):
     message = ''
     file_size = 1
     max_step= 1
+    name = ''
     def change_state(self,state,step,message):
         self.state = state
         self.message = message
         if state == 'file_t':
             self.progress= step*100.0/self.file_size
         elif state == 'train':
-            self.progress= step*100.0/self.max_step
-        print self.progress
+            self.progress= float(step)*100.0/self.max_step
+
 
     def __init__(self,model):
         threading.Thread.__init__(self)
         self.model = model
+        self.name = model.name
         file_name = model.data_set
         file_name = 'data/labeled/'+file_name
         DS = models.Dataset.objects.get(file = file_name)
@@ -199,6 +200,32 @@ class train_thread(threading.Thread):
         q_t_p = models.TrainProject.objects.filter(id=self.model.id)
         q_t_p.update(train_state = 'finished')
 
+        self.state = 'finished'
+class eval_thread(threading.Thread):
+    state = 'initlizing'
+    progress = 0
+    message = ''
+    step = 0
+    result = 0.0
+    name = ''
+    def change_state(self,state,step,result):
+        self.state = state
+        self.step = step
+        self.result = result
+
+    def __init__(self,model):
+        threading.Thread.__init__(self)
+        self.name = model.name
+        self.model = model
+        file_name = model.data_set_eval
+        file_name = 'data/labeled/' + file_name
+        DS_E = models.Dataset.objects.get(file=file_name)
+    def run(self):
+        ep = Evaluation.Eval_Pro(self.model,self)
+        ep.batch_evaluate(self.model.data_set_eval)
+        q_t_p = models.TrainProject.objects.filter(id=self.model.id)
+        q_t_p.update(train_state = 'eval_finished')
+        self.state = 'finished'
 
 def run_train(request):
     if request.method=='POST':
@@ -212,13 +239,38 @@ def run_train(request):
         t_thread.start()
         ts.update(train_state= 'running')
         return HttpResponse('success')
+def run_eval(request):
+    if request.method=='POST':
+        data = request.POST
+        id = data['id']
+        ts = models.TrainProject.objects.filter(id = id)
+
+        ts_m = models.TrainProject.objects.get(id = data['id'])
+        e_thread = eval_thread(ts_m)
+        eval_threads[id] = e_thread
+        e_thread.start()
+        ts.update(train_state= 'evaluating')
+        return HttpResponse('success')
 def train_state(request,id):
     if request.method != 'POST':
         return render(request, template_name='train_state.html', context={'pagename': 'train_state'})
     else:
         ts_thread = threadlist[id]
+        name = ts_thread.name
         state = ts_thread.state
         message= ts_thread.message
         progress = ts_thread.progress
-        mes = {'state':state,'progress':progress,'message':message}
+        mes = {'name':name,'state':state,'progress':progress,'message':message}
+        return HttpResponse(json.dumps(mes),'application/json')
+def eval_state(request,id):
+    if request.method != 'POST':
+        return render(request, template_name='eval_state.html', context={'pagename': 'train_state'})
+    else:
+        ts_thread = eval_threads[id]
+        name = ts_thread.name
+        state = ts_thread.state
+        message= ts_thread.message
+        result = ts_thread.result
+        step = ts_thread.step
+        mes = {'name':name,'state':state,'result':result,'step':step,'message':message}
         return HttpResponse(json.dumps(mes),'application/json')

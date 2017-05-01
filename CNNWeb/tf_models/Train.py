@@ -28,12 +28,12 @@ class Train_pro():
         self.TRAIN_DIR += str(self.model.id)+'/'
         self.flist_str = model.id
         self.Record_Path = self.BASE_PATH + data['RecordPath']
-        self.LOCAL_FILE_LIST = str(self.flist_str).split(',')
+
         self.BATCH_SIZE = model.batch_size
         self.MAX_STEPS = model.max_step
-        for l in self.LOCAL_FILE_LIST:
-            s = self.Record_Path+l+'.tfrecords'
-            self.FILE_LIST.append(s)
+
+        self.FILE_LIST = self.Record_Path+self.flist_str+'.tfrecords'
+
 
         if tf.gfile.Exists(self.TRAIN_DIR):
             tf.gfile.DeleteRecursively(self.TRAIN_DIR)
@@ -147,7 +147,7 @@ class Train_pro():
                     mon_sess.run(train_op)
 def run(model,thread):
     train = Train_pro(model,thread)
-    train.generate_record()
+   #train.generate_record()
     train.train()
 if __name__ == '__main__':
 
